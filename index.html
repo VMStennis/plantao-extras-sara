@@ -575,6 +575,7 @@ async function initCloud(){
     fbAuth = firebase.auth();
     const fs = firebase.firestore();
     try{ fs.settings({ignoreUndefinedProperties:true}); await fs.enablePersistence({synchronizeTabs:true}); }catch(e){}
+    fbAuth.getRedirectResult().catch(e=>{ if(e && e.code) toast(AUTH_ERR[e.code] || 'Não foi possível entrar com o Google'); });
     fbAuth.onAuthStateChanged(async user=>{
       if(fbUnsub){ fbUnsub(); fbUnsub=null; } cloud=null;
       if(!user){ cloudKind=null; setMode('local'); render(); return; }
@@ -589,16 +590,26 @@ const AUTH_ERR = {
   'auth/email-already-in-use':'Já existe uma conta com este e-mail. Use “Entrar”.', 'auth/invalid-credential':'E-mail ou senha incorretos.',
   'auth/wrong-password':'E-mail ou senha incorretos.', 'auth/user-not-found':'Não há conta com este e-mail. Use “Criar conta”.',
   'auth/too-many-requests':'Muitas tentativas. Espere alguns minutos.', 'auth/network-request-failed':'Sem internet. Tente de novo quando estiver conectada.',
-  'auth/operation-not-allowed':'O login por e-mail ainda não foi ativado no projeto.',
+  'auth/operation-not-allowed':'Este tipo de login ainda não foi ativado no projeto. Tente o outro jeito de entrar.',
+  'auth/unauthorized-domain':'Este endereço ainda não foi autorizado no Firebase para o login com Google.',
+  'auth/account-exists-with-different-credential':'Este e-mail já tem conta com outro jeito de entrar. Use e-mail e senha.',
 };
 async function contaAcao(acao){
   if(!fbAuth){ toast('Sem conexão com a nuvem agora'); return; }
   const email = ($('#a-email')?.value||'').trim(), senha = $('#a-senha')?.value||'';
   try{
-    if(acao==='entrar'){ await fbAuth.signInWithEmailAndPassword(email, senha); toast('Conectada. Sincronizando…'); }
+    if(acao==='google'){
+      const prov = new firebase.auth.GoogleAuthProvider(); prov.setCustomParameters({prompt:'select_account'});
+      try{ await fbAuth.signInWithPopup(prov); }
+      catch(e){ // App instalado que não abre janelas: tenta pela página inteira
+        if(e && ['auth/popup-blocked','auth/operation-not-supported-in-this-environment'].includes(e.code)){ await fbAuth.signInWithRedirect(prov); return; }
+        throw e; }
+      toast('Conectada. Sincronizando…');
+    }
+    else if(acao==='entrar'){ await fbAuth.signInWithEmailAndPassword(email, senha); toast('Conectada. Sincronizando…'); }
     else if(acao==='criar'){ await fbAuth.createUserWithEmailAndPassword(email, senha); toast('Conta criada. Seus dados estão subindo para a nuvem'); }
     else if(acao==='senha'){ if(!email){ toast('Digite seu e-mail acima'); return; } await fbAuth.sendPasswordResetEmail(email); toast('Enviamos um link para redefinir a senha'); }
-  }catch(e){ toast(AUTH_ERR[e && e.code] || 'Não deu certo. Tente de novo.'); }
+  }catch(e){ if(e && ['auth/popup-closed-by-user','auth/cancelled-popup-request'].includes(e.code)) return; toast(AUTH_ERR[e && e.code] || 'Não deu certo. Tente de novo.'); }
 }
 
 /* Gravações */
@@ -909,15 +920,17 @@ function vAjustes(){
   const s = state.settings;
   const fbUser = fbAuth && fbAuth.currentUser;
   const modeTxt = window.claude ? (mode==='cloud' ? 'Seus lançamentos ficam salvos na sua conta Claude, visíveis só para você, e aparecem em qualquer aparelho em que você abrir este app.' : 'Neste momento os dados estão salvos só neste navegador. Para salvar na sua conta, abra o app logada no Claude com o convite de acesso. Faça backups de vez em quando.')
-    : fbUser ? 'Seus dados ficam neste aparelho e na nuvem (Firebase/Google), ligados à sua conta. Abra o app em outro aparelho e entre com o mesmo e-mail para ver tudo. Um backup de vez em quando continua sendo uma boa ideia.'
+    : fbUser ? 'Seus dados ficam neste aparelho e na nuvem (Firebase/Google), ligados à sua conta. Abra o app em outro aparelho e entre com a mesma conta para ver tudo. Um backup de vez em quando continua sendo uma boa ideia.'
     : 'Seus dados estão salvos só neste aparelho. Para usar em outros aparelhos, entre na sua conta abaixo. Salve um backup de vez em quando, e sempre antes de trocar de celular ou limpar os dados do navegador.';
   const syncCard = window.claude ? '' : fbUser
     ? `<section class="card"><h2>Sincronizar entre aparelhos</h2><p class="intro">Conectada como <b>${esc(fbUser.email||'')}</b>. ${mode==='cloud'?'Tudo o que você lança aqui aparece nos outros aparelhos.':'Conectando à nuvem…'}</p>
         <button class="btn" data-act="sair-conta">Sair da conta neste aparelho</button></section>`
-    : `<section class="card"><h2>Sincronizar entre aparelhos</h2><p class="intro">${fbAuth ? 'Crie uma conta com seu e-mail (só na primeira vez) e, nos outros aparelhos, use “Entrar” com o mesmo e-mail e senha. O que já está neste aparelho sobe para a nuvem.' : 'Sem internet agora. Abra o app conectada para entrar na sua conta.'}</p>
-        ${fbAuth ? `<label class="field">E-mail<input id="a-email" type="email" autocomplete="username" inputmode="email" placeholder="seu@email.com"></label>
+    : `<section class="card"><h2>Sincronizar entre aparelhos</h2><p class="intro">${fbAuth ? 'Entre com a sua conta Google, usando a mesma em todos os aparelhos. O que já está neste aparelho sobe para a nuvem.' : 'Sem internet agora. Abra o app conectada para entrar na sua conta.'}</p>
+        ${fbAuth ? `<button class="btn primary" data-act="conta-google">Entrar com Google</button>
+        <p class="eyebrow" style="margin:4px 0 0">ou com e-mail e senha</p>
+        <label class="field">E-mail<input id="a-email" type="email" autocomplete="username" inputmode="email" placeholder="seu@email.com"></label>
         <label class="field">Senha<input id="a-senha" type="password" autocomplete="current-password" placeholder="Pelo menos 6 caracteres"></label>
-        <div class="btnrow"><button class="btn primary" data-act="conta-entrar">Entrar</button><button class="btn" data-act="conta-criar">Criar conta</button></div>
+        <div class="btnrow"><button class="btn" data-act="conta-entrar">Entrar</button><button class="btn" data-act="conta-criar">Criar conta</button></div>
         <button class="link" data-act="conta-senha" style="align-self:flex-start">Esqueci a senha</button>` : ''}</section>`;
   return `
   <button class="back" data-act="view" data-v="inicio">${ICON.back}Voltar</button>
@@ -1102,6 +1115,7 @@ document.addEventListener('click', ev=>{
       break;
     case 'ctab': ui.ctab = a.dataset.t; render(); break;
     case 'exportar': exportar(); break;
+    case 'conta-google': contaAcao('google'); break;
     case 'conta-entrar': contaAcao('entrar'); break;
     case 'conta-criar': contaAcao('criar'); break;
     case 'conta-senha': contaAcao('senha'); break;

@@ -1,5 +1,5 @@
 // Plantão & Extras — funciona offline. Troque a versão a cada novo deploy.
-const CACHE = 'plantao-extras-v3';
+const CACHE = 'plantao-extras-v4';
 // Caminhos relativos ao escopo: funciona na raiz (Netlify) e em subpasta (GitHub Pages)
 const BASE = self.registration.scope;
 const CORE = ['', 'index.html', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/apple-touch-icon.png'].map(p => BASE + p);
