@@ -345,6 +345,9 @@ td.r,th.r{text-align:right;white-space:nowrap}
 </div>
 <div class="toast" id="toast" hidden></div>
 <input type="file" id="import-file" accept="application/json,.json" hidden>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
 
 <script>
 /* ================= Dados do contrato ================= */
@@ -500,25 +503,42 @@ function loadLocal(){
 }
 function saveLocal(){ try{ localStorage.setItem(LS_KEY, JSON.stringify(state)); }catch(e){} }
 
-let cloud = null; let mode = 'connecting';
+/* Nuvem: dentro de um Artifact do claude.ai usa window.claude 'db'; fora dele (GitHub Pages) usa Firebase
+   com login por e-mail e senha. Coleção users/{uid}/docs — as regras do Firestore só deixam a dona ler e gravar. */
+const FIREBASE = { apiKey:'AIzaSyAQD2UnzV5aJ1GJd7sfcB2GOxWgBQ-NuwA', authDomain:'plantao-extras-sara.firebaseapp.com', projectId:'plantao-extras-sara', appId:'1:440303658125:web:f60ace67576e55a084aec4' };
+const SYNC_KEY = 'sara-trabalho-sync-uid'; // última conta já mesclada neste aparelho
+let cloud = null; let cloudKind = null; let mode = 'connecting'; let fbAuth = null; let fbUnsub = null;
 const queues = {};
 function setMode(m){ mode=m; const el=$('#sync');
   el.className = 'sync ' + (m==='cloud'?'cloud':m==='local'?'local':'');
-  el.querySelector('span').textContent = m==='cloud' ? 'Salvo na conta' : m==='local' ? (window.claude ? 'Só neste aparelho' : 'Salvo no aparelho') : 'Conectando…';
+  el.querySelector('span').textContent = m==='cloud' ? (cloudKind==='fb' ? 'Sincronizado' : 'Salvo na conta') : m==='local' ? (window.claude ? 'Só neste aparelho' : 'Salvo no aparelho') : 'Conectando…';
 }
 function writeDoc(docId, body){
   if(!cloud) return Promise.resolve();
+  const run = ()=> body===null ? cloud.doc(docId).delete() : cloud.doc(docId).set(body);
+  const onErr = e=>{ if(e && ['invalid_argument','revoked','not_granted','permission-denied','unauthenticated'].includes(e.code)){ cloud=null; setMode('local'); toast('Sem permissão para salvar na nuvem: guardando neste aparelho'); } };
+  // O Firestore já ordena as gravações e guarda as pendentes sem internet; não encadear para nada ficar fora do cache dele
+  if(cloudKind==='fb') return run().catch(onErr);
   const prev = queues[docId] || Promise.resolve();
-  const p = prev.then(()=> body===null ? cloud.doc(docId).delete() : cloud.doc(docId).set(body))
-    .catch(e=>{ if(e && (e.code==='invalid_argument'||e.code==='revoked'||e.code==='not_granted')){ cloud=null; setMode('local'); toast('Sem permissão para salvar na conta: guardando neste aparelho'); } });
+  const p = prev.then(run).catch(onErr);
   queues[docId] = p; return p;
 }
 const dayDocId = d => 'd_'+d, exDocId = id => 'x_'+id;
+const hasLocalData = () => Object.keys(state.extras).length || Object.keys(state.days).length || Object.keys(state.biblia.lidos).length;
 async function uploadAll(){
   await writeDoc('settings', {kind:'settings', ...state.settings});
   for(const e of Object.values(state.extras)) await writeDoc(exDocId(e.id), {kind:'extra', ...e});
   for(const d of Object.values(state.days)) await writeDoc(dayDocId(d.date), {kind:'day', ...d});
   if(Object.keys(state.biblia.lidos).length) await writeDoc('biblia', {kind:'biblia', lidos: state.biblia.lidos});
+}
+// Primeira conexão de uma conta neste aparelho: sobe o que só existe aqui (a nuvem vence nos conflitos)
+async function mergeUp(first){
+  if(first.empty){ if(hasLocalData()) await uploadAll(); return; }
+  const ids = new Set(first.docs.map(d=>d.id));
+  for(const e of Object.values(state.extras)) if(!ids.has(exDocId(e.id))) await writeDoc(exDocId(e.id), {kind:'extra', ...e});
+  for(const d of Object.values(state.days)) if(!ids.has(dayDocId(d.date))) await writeDoc(dayDocId(d.date), {kind:'day', ...d});
+  if(Object.keys(state.biblia.lidos).length){ const cb = first.docs.find(d=>d.id==='biblia');
+    await writeDoc('biblia', {kind:'biblia', lidos: {...state.biblia.lidos, ...(cb ? normBiblia(cb.data()).lidos : {})}}); }
 }
 function applySnapshot(snap){
   const next = { settings: structuredClone(DEFAULTS), extras:{}, days:{}, biblia:{lidos:{}} };
@@ -530,20 +550,55 @@ function applySnapshot(snap){
   }
   state = next; saveLocal(); render();
 }
+async function connectCol(col, kind, accountId){
+  cloudKind = kind; setMode('connecting');
+  const first = await col.get();
+  cloud = col;
+  let jaMesclado = false; try{ jaMesclado = localStorage.getItem(SYNC_KEY)===accountId; }catch(e){}
+  if(kind==='claude'){ if(first.empty && hasLocalData()) await uploadAll(); }
+  else if(!jaMesclado){ await mergeUp(first); try{ localStorage.setItem(SYNC_KEY, accountId); }catch(e){} }
+  if(!cloud) return null;
+  setMode('cloud');
+  return col.onSnapshot(applySnapshot, ()=>{ cloud=null; setMode('local'); });
+}
 async function initCloud(){
   try{
-    if(!window.claude || !window.claude.use){ setMode('local'); return; }
-    const [db, user] = await Promise.all([window.claude.use('db'), window.claude.use('user')]);
-    const id = user ? await user.id() : null;
-    if(!db || !id){ setMode('local'); return; }
-    const col = db.collection('data/users/' + id);
-    const first = await col.get();
-    cloud = col;
-    if(first.empty && (Object.keys(state.extras).length || Object.keys(state.days).length || Object.keys(state.biblia.lidos).length)) await uploadAll();
-    if(!cloud) return;
-    setMode('cloud');
-    col.onSnapshot(applySnapshot, ()=>{ cloud=null; setMode('local'); });
+    if(window.claude && window.claude.use){
+      const [db, user] = await Promise.all([window.claude.use('db'), window.claude.use('user')]);
+      const id = user ? await user.id() : null;
+      if(!db || !id){ setMode('local'); return; }
+      await connectCol(db.collection('data/users/' + id), 'claude', id);
+      return;
+    }
+    if(!window.firebase){ setMode('local'); return; } // sem internet na primeira abertura: segue só no aparelho
+    firebase.initializeApp(FIREBASE);
+    fbAuth = firebase.auth();
+    const fs = firebase.firestore();
+    try{ fs.settings({ignoreUndefinedProperties:true}); await fs.enablePersistence({synchronizeTabs:true}); }catch(e){}
+    fbAuth.onAuthStateChanged(async user=>{
+      if(fbUnsub){ fbUnsub(); fbUnsub=null; } cloud=null;
+      if(!user){ cloudKind=null; setMode('local'); render(); return; }
+      try{ fbUnsub = await connectCol(fs.collection('users/' + user.uid + '/docs'), 'fb', user.uid); }
+      catch(e){ cloud=null; setMode('local'); toast('Não foi possível conectar à nuvem agora'); }
+      render();
+    });
   }catch(e){ cloud=null; setMode('local'); }
+}
+const AUTH_ERR = {
+  'auth/invalid-email':'E-mail inválido.', 'auth/missing-password':'Digite a senha.', 'auth/weak-password':'A senha precisa ter pelo menos 6 caracteres.',
+  'auth/email-already-in-use':'Já existe uma conta com este e-mail. Use “Entrar”.', 'auth/invalid-credential':'E-mail ou senha incorretos.',
+  'auth/wrong-password':'E-mail ou senha incorretos.', 'auth/user-not-found':'Não há conta com este e-mail. Use “Criar conta”.',
+  'auth/too-many-requests':'Muitas tentativas. Espere alguns minutos.', 'auth/network-request-failed':'Sem internet. Tente de novo quando estiver conectada.',
+  'auth/operation-not-allowed':'O login por e-mail ainda não foi ativado no projeto.',
+};
+async function contaAcao(acao){
+  if(!fbAuth){ toast('Sem conexão com a nuvem agora'); return; }
+  const email = ($('#a-email')?.value||'').trim(), senha = $('#a-senha')?.value||'';
+  try{
+    if(acao==='entrar'){ await fbAuth.signInWithEmailAndPassword(email, senha); toast('Conectada. Sincronizando…'); }
+    else if(acao==='criar'){ await fbAuth.createUserWithEmailAndPassword(email, senha); toast('Conta criada. Seus dados estão subindo para a nuvem'); }
+    else if(acao==='senha'){ if(!email){ toast('Digite seu e-mail acima'); return; } await fbAuth.sendPasswordResetEmail(email); toast('Enviamos um link para redefinir a senha'); }
+  }catch(e){ toast(AUTH_ERR[e && e.code] || 'Não deu certo. Tente de novo.'); }
 }
 
 /* Gravações */
@@ -852,13 +907,25 @@ function vLivro(b, st){
 
 function vAjustes(){
   const s = state.settings;
-  const modeTxt = !window.claude ? 'Seus dados ficam salvos só neste aparelho, no navegador — nada é enviado para a internet. Salve um backup de vez em quando, e sempre antes de trocar de celular ou limpar os dados do navegador.' : mode==='cloud' ? 'Seus lançamentos ficam salvos na sua conta Claude, visíveis só para você, e aparecem em qualquer aparelho em que você abrir este app.' : 'Neste momento os dados estão salvos só neste navegador. Para salvar na sua conta, abra o app logada no Claude com o convite de acesso. Faça backups de vez em quando.';
+  const fbUser = fbAuth && fbAuth.currentUser;
+  const modeTxt = window.claude ? (mode==='cloud' ? 'Seus lançamentos ficam salvos na sua conta Claude, visíveis só para você, e aparecem em qualquer aparelho em que você abrir este app.' : 'Neste momento os dados estão salvos só neste navegador. Para salvar na sua conta, abra o app logada no Claude com o convite de acesso. Faça backups de vez em quando.')
+    : fbUser ? 'Seus dados ficam neste aparelho e na nuvem (Firebase/Google), ligados à sua conta. Abra o app em outro aparelho e entre com o mesmo e-mail para ver tudo. Um backup de vez em quando continua sendo uma boa ideia.'
+    : 'Seus dados estão salvos só neste aparelho. Para usar em outros aparelhos, entre na sua conta abaixo. Salve um backup de vez em quando, e sempre antes de trocar de celular ou limpar os dados do navegador.';
+  const syncCard = window.claude ? '' : fbUser
+    ? `<section class="card"><h2>Sincronizar entre aparelhos</h2><p class="intro">Conectada como <b>${esc(fbUser.email||'')}</b>. ${mode==='cloud'?'Tudo o que você lança aqui aparece nos outros aparelhos.':'Conectando à nuvem…'}</p>
+        <button class="btn" data-act="sair-conta">Sair da conta neste aparelho</button></section>`
+    : `<section class="card"><h2>Sincronizar entre aparelhos</h2><p class="intro">${fbAuth ? 'Crie uma conta com seu e-mail (só na primeira vez) e, nos outros aparelhos, use “Entrar” com o mesmo e-mail e senha. O que já está neste aparelho sobe para a nuvem.' : 'Sem internet agora. Abra o app conectada para entrar na sua conta.'}</p>
+        ${fbAuth ? `<label class="field">E-mail<input id="a-email" type="email" autocomplete="username" inputmode="email" placeholder="seu@email.com"></label>
+        <label class="field">Senha<input id="a-senha" type="password" autocomplete="current-password" placeholder="Pelo menos 6 caracteres"></label>
+        <div class="btnrow"><button class="btn primary" data-act="conta-entrar">Entrar</button><button class="btn" data-act="conta-criar">Criar conta</button></div>
+        <button class="link" data-act="conta-senha" style="align-self:flex-start">Esqueci a senha</button>` : ''}</section>`;
   return `
   <button class="back" data-act="view" data-v="inicio">${ICON.back}Voltar</button>
   <section class="card"><h2>Seus dados</h2><p class="intro">${modeTxt}</p>
     <div class="btnrow"><button class="btn" data-act="exportar">Salvar backup</button><button class="btn" data-act="importar">Restaurar backup</button></div>
     <div id="backup-box" class="backup-box" hidden></div>
   </section>
+  ${syncCard}
   <section class="card"><h2>Valores do contrato</h2><p class="intro">A clínica pode atualizar valores com aviso escrito de 30 dias (cl. 2.8). Mudanças aqui valem para novos lançamentos; os extras já lançados mantêm a comissão calculada.</p>
     <div class="grid2">
       <label class="field">Honorário fixo<input id="s-fixo" data-set="fixo" inputmode="decimal" value="${moneyInput(s.fixo)}"></label>
@@ -1035,6 +1102,10 @@ document.addEventListener('click', ev=>{
       break;
     case 'ctab': ui.ctab = a.dataset.t; render(); break;
     case 'exportar': exportar(); break;
+    case 'conta-entrar': contaAcao('entrar'); break;
+    case 'conta-criar': contaAcao('criar'); break;
+    case 'conta-senha': contaAcao('senha'); break;
+    case 'sair-conta': if(fbAuth) fbAuth.signOut().then(()=>toast('Você saiu da conta. Os dados continuam neste aparelho')); break;
     case 'importar': $('#import-file').click(); break;
     case 'copiar-backup': { const t=$('#backup-txt'); const ok=()=>toast('Backup copiado');
       if(navigator.clipboard?.writeText){ navigator.clipboard.writeText(t.value).then(ok, ()=>{ t.select(); toast('Texto selecionado: copie manualmente'); }); } else { t.select(); toast('Texto selecionado: copie manualmente'); } break; }

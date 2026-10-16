@@ -1,5 +1,5 @@
 // Plantão & Extras — funciona offline. Troque a versão a cada novo deploy.
-const CACHE = 'plantao-extras-v2';
+const CACHE = 'plantao-extras-v3';
 // Caminhos relativos ao escopo: funciona na raiz (Netlify) e em subpasta (GitHub Pages)
 const BASE = self.registration.scope;
 const CORE = ['', 'index.html', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/apple-touch-icon.png'].map(p => BASE + p);
@@ -13,8 +13,8 @@ self.addEventListener('fetch', e => {
     e.respondWith(fetch(req).then(r => { const c = r.clone(); caches.open(CACHE).then(x => x.put(BASE + 'index.html', c)); return r; }).catch(() => caches.match(BASE + 'index.html')));
     return;
   }
-  // Ícones, manifesto e fontes: cache primeiro
-  if (url.origin === location.origin || url.hostname.endsWith('fonts.googleapis.com') || url.hostname.endsWith('fonts.gstatic.com')) {
+  // Ícones, manifesto, fontes e SDK do Firebase (URL com versão): cache primeiro
+  if (url.origin === location.origin || url.hostname.endsWith('fonts.googleapis.com') || url.hostname.endsWith('fonts.gstatic.com') || url.href.startsWith('https://www.gstatic.com/firebasejs/')) {
     e.respondWith(caches.match(req).then(hit => hit || fetch(req).then(r => { if (r.ok || r.type === 'opaque') { const c = r.clone(); caches.open(CACHE).then(x => x.put(req, c)); } return r; })));
   }
 });
