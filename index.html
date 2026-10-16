@@ -1,0 +1,1077 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#A82C55">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Plantão & Extras">
+<meta name="robots" content="noindex, nofollow">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Plantão & Extras</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..700&family=Figtree:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: app de bolso — cabeçalho com traçado de ECG, conteúdo em coluna única (máx. 560px), barra de abas fixa embaixo, formulários em folha deslizante. */
+:root{
+  --bg:#F2F5F4; --surface:#FFFFFF; --sunk:#E8EEEC; --ink:#142729; --muted:#5A6E70; --line:#D9E2E0;
+  --accent:#A82C55; --accent-ink:#FFFFFF; --accent-soft:#F6E1E8;
+  --teal:#1C6B66; --teal-soft:#DCEEEB;
+  --gold:#9A6A12; --gold-soft:#F8EDD6;
+  --ok:#2C7A4B; --ok-soft:#DDF0E3;
+  --warn:#A55B00; --warn-soft:#FBEBD3;
+  --shadow:0 1px 2px rgba(20,39,41,.06),0 8px 24px rgba(20,39,41,.06);
+  --f-display:"Bricolage Grotesque",ui-rounded,"Segoe UI",system-ui,sans-serif;
+  --f-body:"Figtree",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  --r:14px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0E191A; --surface:#162425; --sunk:#1D2E30; --ink:#E4EEED; --muted:#93A8A9; --line:#27393B;
+  --accent:#EE7C9F; --accent-ink:#2A0E18; --accent-soft:#3A1D28;
+  --teal:#5BC1B7; --teal-soft:#16332F;
+  --gold:#E2B45E; --gold-soft:#342913;
+  --ok:#6FCB91; --ok-soft:#163323;
+  --warn:#EFB15A; --warn-soft:#382912;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.25);
+  color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#0E191A; --surface:#162425; --sunk:#1D2E30; --ink:#E4EEED; --muted:#93A8A9; --line:#27393B;
+  --accent:#EE7C9F; --accent-ink:#2A0E18; --accent-soft:#3A1D28;
+  --teal:#5BC1B7; --teal-soft:#16332F;
+  --gold:#E2B45E; --gold-soft:#342913;
+  --ok:#6FCB91; --ok-soft:#163323;
+  --warn:#EFB15A; --warn-soft:#382912;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.25);
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.45;-webkit-tap-highlight-color:transparent}
+button,input,textarea,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:8px}
+.num{font-variant-numeric:tabular-nums}
+.wrap{max-width:560px;margin:0 auto;padding-inline:16px}
+
+/* Cabeçalho */
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);border-bottom:1px solid var(--line)}
+.top .wrap{padding-block:12px 10px;display:flex;flex-direction:column;gap:8px}
+.top-row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.hello{display:flex;flex-direction:column;min-width:0}
+.hello small{color:var(--muted);font-size:12.5px}
+.hello h1{margin:0;font-family:var(--f-display);font-weight:650;font-size:22px;letter-spacing:-.01em;line-height:1.1}
+.ecg{display:block;width:100%;height:18px;color:var(--accent);opacity:.55}
+.icon-btn{border:1px solid var(--line);background:var(--surface);border-radius:12px;width:40px;height:40px;display:grid;place-items:center;flex:none}
+.icon-btn svg{width:20px;height:20px}
+.sync{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);white-space:nowrap}
+.sync i{width:8px;height:8px;border-radius:50%;background:var(--muted)}
+.sync.cloud i{background:var(--ok)}
+.sync.local i{background:var(--warn)}
+.month{display:flex;align-items:center;gap:8px}
+.month b{font-family:var(--f-display);font-weight:600;font-size:16px;min-width:7.6em;text-align:center}
+.month button{border:0;background:var(--sunk);border-radius:10px;width:34px;height:32px;display:grid;place-items:center}
+.month button svg{width:18px;height:18px}
+
+main{padding-block:16px calc(110px + env(safe-area-inset-bottom,0px))}
+main .wrap{display:flex;flex-direction:column;gap:16px}
+
+/* Cartões */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.card h2,.sec-title{margin:0;font-family:var(--f-display);font-weight:600;font-size:17px;letter-spacing:-.005em}
+.sec-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.sec-head a,.link{color:var(--teal);font-weight:600;font-size:13.5px;background:none;border:0;padding:0;text-decoration:none}
+.eyebrow{font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.muted{color:var(--muted)}
+.empty{color:var(--muted);font-size:14px;padding:4px 0}
+
+/* Herói financeiro */
+.hero{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:18px 16px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:14px}
+.big{font-family:var(--f-display);font-weight:700;font-size:clamp(34px,10vw,44px);letter-spacing:-.025em;line-height:1}
+.hero .sub{color:var(--muted);font-size:13.5px}
+.bar{display:flex;height:10px;border-radius:99px;overflow:hidden;background:var(--sunk);gap:2px}
+.bar span{display:block;height:100%}
+.c-fixo{background:var(--teal)} .c-sob{background:var(--gold)} .c-cham{background:var(--warn)} .c-com{background:var(--accent)}
+.rows{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.rows li{display:grid;grid-template-columns:12px 1fr auto;gap:10px;align-items:center;padding:9px 0;border-top:1px solid var(--line)}
+.rows li:first-child{border-top:0}
+.dot{width:10px;height:10px;border-radius:3px}
+.rows .lbl{display:flex;flex-direction:column;min-width:0}
+.rows .lbl small{color:var(--muted);font-size:12.5px}
+.rows .v{font-weight:600}
+.net{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-radius:10px;background:var(--sunk);font-size:14px}
+
+.alert{display:flex;gap:12px;align-items:flex-start;padding:12px 14px;border-radius:12px;background:var(--warn-soft);color:var(--ink);border:1px solid color-mix(in srgb,var(--warn) 35%,transparent);text-align:left;width:100%}
+.alert svg{flex:none;width:20px;height:20px;color:var(--warn);margin-top:1px}
+.alert b{display:block}
+.alert small{color:var(--muted)}
+
+.quick{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.qbtn{display:flex;flex-direction:column;align-items:flex-start;gap:6px;padding:14px;border-radius:14px;border:1px solid var(--line);background:var(--surface);text-align:left;font-weight:600}
+.qbtn small{font-weight:400;color:var(--muted);font-size:12.5px}
+.qbtn .ic{width:32px;height:32px;border-radius:10px;display:grid;place-items:center}
+.qbtn .ic svg{width:18px;height:18px}
+.qbtn.a .ic{background:var(--accent-soft);color:var(--accent)}
+.qbtn.b .ic{background:var(--gold-soft);color:var(--gold)}
+
+.plist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.plist li button{width:100%;display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:var(--bg);text-align:left}
+.dbadge{flex:none;width:46px;text-align:center;border-radius:10px;background:var(--gold-soft);color:var(--gold);padding:4px 0;line-height:1.1}
+.dbadge b{display:block;font-family:var(--f-display);font-size:19px}
+.dbadge small{font-size:11px;text-transform:uppercase;letter-spacing:.05em}
+.plist .t{display:flex;flex-direction:column;min-width:0;flex:1}
+.plist .t small{color:var(--muted);font-size:12.5px}
+
+.months{display:flex;align-items:flex-end;gap:10px;height:120px;padding-top:18px}
+.months div{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;height:100%;justify-content:flex-end;min-width:0}
+.months .col{width:100%;max-width:44px;border-radius:8px 8px 3px 3px;background:var(--teal-soft);position:relative}
+.months .col.cur{background:var(--accent)}
+.months .col em{position:absolute;bottom:100%;left:50%;transform:translateX(-50%);font-style:normal;font-size:11px;color:var(--muted);white-space:nowrap;margin-bottom:3px}
+.months small{font-size:12px;color:var(--muted);text-transform:capitalize}
+
+/* Extras */
+.toolbar{display:flex;flex-direction:column;gap:10px}
+.search{display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:0 12px}
+.search svg{width:18px;height:18px;color:var(--muted);flex:none}
+.search input{border:0;background:transparent;padding:11px 0;width:100%;outline:none}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:99px;padding:7px 12px;font-size:13.5px;font-weight:500}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.chip .n{opacity:.7;margin-left:4px}
+.sumline{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:14px}
+.sumline b{font-family:var(--f-display);font-size:20px}
+.daygroup{display:flex;flex-direction:column;gap:8px}
+.daygroup h3{margin:6px 0 0;font-size:12.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.ex{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:6px;text-align:left;width:100%}
+.ex-top{display:flex;justify-content:space-between;gap:10px;align-items:baseline}
+.tag{font-size:12px;font-weight:600;color:var(--accent);background:var(--accent-soft);padding:2px 8px;border-radius:6px}
+.tag.zero{color:var(--teal);background:var(--teal-soft)}
+.ex-top .val{font-weight:700;white-space:nowrap}
+.ex-mid{font-size:15px;overflow-wrap:anywhere}
+.ex-bot{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;font-size:12.5px;color:var(--muted)}
+.reg{border:1px dashed var(--warn);color:var(--warn);background:transparent;border-radius:99px;padding:4px 10px;font-size:12px;font-weight:600}
+.reg.on{border:1px solid transparent;background:var(--ok-soft);color:var(--ok)}
+
+/* Rotina */
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.cal .h{font-size:11px;text-align:center;color:var(--muted);font-weight:600;text-transform:uppercase;padding-bottom:4px}
+.cal button{aspect-ratio:1/1.05;max-width:100%;border:1px solid transparent;background:var(--bg);border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:5px 0 0;gap:3px;font-variant-numeric:tabular-nums;font-weight:500;min-width:0}
+.cal button.today{border-color:var(--teal)}
+.cal button.sob{background:var(--gold-soft)}
+.cal button.sel{background:var(--ink);color:var(--bg)}
+.cal .marks{display:flex;gap:3px;height:6px}
+.cal .marks i{width:6px;height:6px;border-radius:50%}
+.m-sob{background:var(--gold)} .m-cham{background:var(--warn)} .m-ex{background:var(--accent)} .m-it{background:var(--teal)}
+.cal button.sel .marks i{outline:1.5px solid var(--bg)}
+.legend{display:flex;flex-wrap:wrap;gap:12px;font-size:12px;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:5px}
+.legend i{width:8px;height:8px;border-radius:50%}
+.toggle{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;border-top:1px solid var(--line)}
+.toggle:first-of-type{border-top:0}
+.toggle .lbl{display:flex;flex-direction:column;min-width:0}
+.toggle small{color:var(--muted);font-size:12.5px}
+.sw{position:relative;width:48px;height:28px;flex:none}
+.sw input{position:absolute;inset:0;opacity:0;margin:0;cursor:pointer}
+.sw span{position:absolute;inset:0;border-radius:99px;background:var(--line);transition:background .15s}
+.sw span::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:var(--surface);box-shadow:0 1px 3px rgba(0,0,0,.25);transition:transform .15s}
+.sw input:checked+span{background:var(--gold)}
+.sw.w input:checked+span{background:var(--warn)}
+.sw input:checked+span::after{transform:translateX(20px)}
+.sw input:focus-visible+span{outline:2px solid var(--accent);outline-offset:2px}
+.sw input:disabled+span{opacity:.45}
+.daytotal{display:flex;justify-content:space-between;font-size:14px;padding-top:10px;border-top:1px solid var(--line)}
+.agenda{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.agenda li button{width:100%;display:grid;grid-template-columns:62px 1fr;gap:10px;align-items:start;text-align:left;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:var(--bg)}
+.agenda .hr{font-weight:700;font-variant-numeric:tabular-nums;font-size:14px;line-height:1.25}
+.agenda .hr small{display:block;font-weight:500;color:var(--muted);font-size:12px}
+.agenda .t{min-width:0;overflow-wrap:anywhere}
+.agenda .k{font-size:11.5px;font-weight:600;text-transform:uppercase;letter-spacing:.05em}
+.k-plantao{color:var(--gold)} .k-cirurgia{color:var(--accent)} .k-consulta,.k-exame{color:var(--teal)} .k-pessoal,.k-outro{color:var(--muted)}
+textarea{width:100%;min-height:84px;border:1px solid var(--line);border-radius:12px;background:var(--bg);padding:10px 12px;resize:vertical}
+
+/* Contrato */
+.facts{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.facts div{background:var(--bg);border-radius:10px;padding:10px 12px;min-width:0}
+.facts small{display:block;color:var(--muted);font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;font-weight:600}
+.facts b{font-size:14px;overflow-wrap:anywhere}
+.seg{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none}
+.seg::-webkit-scrollbar{display:none}
+.seg button{flex:none;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:8px 12px;font-weight:600;font-size:13.5px}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.clist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.clist li{display:grid;grid-template-columns:1fr auto;gap:10px;padding:12px 0;border-top:1px solid var(--line);align-items:start}
+.clist li:first-child{border-top:0}
+.clist p{margin:0}
+.clist p b{display:block;margin-bottom:2px}
+.cl{font-family:var(--f-mono);font-size:11px;color:var(--muted);background:var(--sunk);border-radius:6px;padding:2px 6px;white-space:nowrap}
+.intro{font-size:14px;color:var(--muted);margin:0}
+.box-d{border-left:3px solid var(--ok)} .box-o{border-left:3px solid var(--teal)} .box-n{border-left:3px solid var(--gold)} .box-a{border-left:3px solid var(--warn)}
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th,td{text-align:left;padding:9px 8px;border-top:1px solid var(--line);vertical-align:top}
+th{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);border-top:0}
+td.r,th.r{text-align:right;white-space:nowrap}
+.disc{font-size:12.5px;color:var(--muted);margin:0}
+
+/* Ajustes */
+.field{display:flex;flex-direction:column;gap:6px;font-size:13.5px;font-weight:600}
+.field small{font-weight:400;color:var(--muted)}
+.field input,.field select{border:1px solid var(--line);border-radius:12px;background:var(--bg);padding:11px 12px;font-weight:400;width:100%;min-width:0}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:11px 14px;font-weight:600;text-align:center}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.danger{color:var(--warn);border-color:color-mix(in srgb,var(--warn) 50%,transparent)}
+.btn.danger.armed{background:var(--warn);color:var(--surface)}
+.btnrow{display:flex;gap:10px;flex-wrap:wrap}
+.btnrow .btn{flex:1}
+.back{display:inline-flex;align-items:center;gap:6px;border:0;background:none;color:var(--teal);font-weight:600;padding:0}
+.back svg{width:18px;height:18px}
+
+/* Barra de abas */
+.tabs{position:fixed;left:0;right:0;bottom:0;z-index:30;background:var(--surface);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px)}
+.tabs .wrap{display:grid;grid-template-columns:repeat(5,1fr);padding-block:6px}
+.tabs button{border:0;background:none;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 0;font-size:11.5px;font-weight:600;color:var(--muted)}
+.tabs button svg{width:22px;height:22px}
+.tabs button[aria-current="page"]{color:var(--accent)}
+.fab{position:fixed;right:max(16px,calc(50% - 264px));bottom:calc(76px + env(safe-area-inset-bottom,0px));z-index:31;border:0;border-radius:18px;background:var(--accent);color:var(--accent-ink);display:flex;align-items:center;gap:8px;padding:14px 18px;font-weight:700;box-shadow:0 6px 18px color-mix(in srgb,var(--accent) 40%,transparent)}
+.fab svg{width:20px;height:20px}
+
+/* Folha (formulários) */
+.sheet{position:fixed;inset:0;z-index:50}
+.sheet-bg{position:absolute;inset:0;background:rgba(8,18,19,.45)}
+.sheet-panel{position:absolute;left:0;right:0;bottom:0;max-height:92%;overflow-y:auto;background:var(--surface);border-radius:20px 20px 0 0;padding:8px 0 calc(20px + env(safe-area-inset-bottom,0px));animation:up .22s ease-out}
+.sheet-panel .wrap{display:flex;flex-direction:column;gap:14px}
+.grab{width:40px;height:4px;border-radius:99px;background:var(--line);margin:4px auto 6px}
+.sheet h2{margin:0;font-family:var(--f-display);font-weight:650;font-size:21px}
+.tchips{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.tchip{border:1px solid var(--line);background:var(--bg);border-radius:12px;padding:9px 10px;text-align:left;font-size:13px;font-weight:600;display:flex;flex-direction:column;gap:2px;min-width:0}
+.tchip small{font-weight:500;color:var(--muted);font-size:12px}
+.tchip[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.tchip[aria-pressed="true"] small{color:var(--accent)}
+.hint{margin:0;font-size:13px;color:var(--muted);background:var(--bg);border-radius:10px;padding:9px 12px}
+.hint.warn{background:var(--gold-soft);color:var(--ink)}
+.hint button{margin-top:6px}
+.check{display:flex;gap:10px;align-items:center;font-size:14px;font-weight:500}
+.check input{width:20px;height:20px;accent-color:var(--accent)}
+.calc{font-size:12.5px;color:var(--muted);font-weight:400}
+@keyframes up{from{transform:translateY(24px);opacity:.4}to{transform:none;opacity:1}}
+@media (prefers-reduced-motion:reduce){.sheet-panel{animation:none}.sw span,.sw span::after{transition:none}}
+
+/* Bíblia */
+.pbar{height:8px;border-radius:99px;background:var(--sunk);overflow:hidden}
+.pbar span{display:block;height:100%;background:var(--teal);border-radius:99px}
+.bstats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.bstats div{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 8px;min-width:0;text-align:center}
+.bstats b{display:block;font-family:var(--f-display);font-size:20px;line-height:1.2}
+.bstats small{color:var(--muted);font-size:11.5px}
+.trow{display:flex;flex-direction:column;gap:6px}
+.trow-top{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:13.5px}
+.trow-top span{color:var(--muted)}
+.next{display:flex;flex-direction:column;gap:12px}
+.next .t{display:flex;flex-direction:column;min-width:0}
+.next .t b{font-family:var(--f-display);font-size:19px;font-weight:600}
+.books{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.books li button{width:100%;display:grid;grid-template-columns:1fr auto;gap:6px 12px;align-items:center;padding:11px 0;border:0;border-top:1px solid var(--line);background:none;text-align:left}
+.books li:first-child button{border-top:0}
+.books .pbar{grid-column:1/-1;height:5px}
+.books .cnt{font-size:12.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.books .done .cnt{color:var(--teal);font-weight:600}
+.caps{display:grid;grid-template-columns:repeat(auto-fill,minmax(46px,1fr));gap:6px}
+.caps button{height:44px;border:1px solid var(--line);background:var(--bg);border-radius:10px;font-weight:600;font-variant-numeric:tabular-nums;padding:0}
+.caps button[aria-pressed="true"]{background:var(--teal);border-color:var(--teal);color:var(--surface)}
+.bnav{display:flex;justify-content:space-between;gap:10px}
+
+.toast{position:fixed;left:50%;bottom:calc(140px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;font-weight:600;font-size:14px;z-index:60;max-width:calc(100% - 32px)}
+.backup-box textarea{font-family:var(--f-mono);font-size:11px;min-height:140px}
+@media (min-width:600px){ .tchips{grid-template-columns:1fr 1fr 1fr} }
+</style>
+
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <div class="top-row">
+      <div class="hello">
+        <small id="hello-date">Clínica · anestesia e cardiologia</small>
+        <h1 id="hello-name">Olá, Dra. Sara</h1>
+      </div>
+      <button class="icon-btn" data-act="view" data-v="ajustes" aria-label="Ajustes e backup">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      </button>
+    </div>
+    <svg class="ecg" viewBox="0 0 400 18" preserveAspectRatio="none" aria-hidden="true"><polyline fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" points="0,11 70,11 78,9 84,11 96,11 100,13 105,1 110,17 114,11 128,11 138,7 150,11 230,11 238,9 244,11 256,11 260,13 265,1 270,17 274,11 288,11 298,7 310,11 400,11"/></svg>
+    <div class="top-row" id="month-row">
+      <div class="month">
+        <button data-act="mes" data-d="-1" aria-label="Mês anterior"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 6l-6 6 6 6"/></svg></button>
+        <b id="month-label" class="num">outubro 2026</b>
+        <button data-act="mes" data-d="1" aria-label="Próximo mês"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg></button>
+      </div>
+      <span class="sync" id="sync"><i></i><span>Conectando…</span></span>
+    </div>
+  </div>
+</header>
+
+<main id="main"><div class="wrap" id="view"></div></main>
+
+<button class="fab" id="fab" data-act="novo-extra">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+  Extra
+</button>
+
+<nav class="tabs" aria-label="Seções">
+  <div class="wrap">
+    <button data-act="view" data-v="inicio" aria-current="page">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg>Financeiro</button>
+    <button data-act="view" data-v="extras">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>Extras</button>
+    <button data-act="view" data-v="rotina">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Rotina</button>
+    <button data-act="view" data-v="contrato">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M8 13h8M8 17h6"/></svg>Contrato</button>
+    <button data-act="view" data-v="biblia">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 5.5A1.5 1.5 0 0 1 3.5 4H9a3 3 0 0 1 3 3v13a2 2 0 0 0-2-2H3.5A1.5 1.5 0 0 1 2 16.5z"/><path d="M22 5.5A1.5 1.5 0 0 0 20.5 4H15a3 3 0 0 0-3 3v13a2 2 0 0 1 2-2h6.5a1.5 1.5 0 0 0 1.5-1.5z"/></svg>Bíblia</button>
+  </div>
+</nav>
+
+<div class="sheet" id="sheet" hidden>
+  <div class="sheet-bg" data-act="fechar"></div>
+  <div class="sheet-panel" role="dialog" aria-modal="true"><div class="grab"></div><div class="wrap" id="sheet-body"></div></div>
+</div>
+<div class="toast" id="toast" hidden></div>
+<input type="file" id="import-file" accept="application/json,.json" hidden>
+
+<script>
+/* ================= Dados do contrato ================= */
+const TIPOS = [
+  {id:'cardio',     nome:'Consulta cardiológica',      curto:'Consulta cardio',     modo:'pct',  regra:'50% — consulta da sua especialidade, feita por você.'},
+  {id:'geral',      nome:'Consulta geral',             curto:'Consulta geral',      modo:'pct',  regra:'35% — quando feita diretamente por você.'},
+  {id:'preanest',   nome:'Avaliação pré-anestésica',   curto:'Pré-anestésica',      modo:'pct',  regra:'35% — quando solicitada, feita e registrada por você.'},
+  {id:'laudoecg',   nome:'Laudo de eletrocardiograma', curto:'Laudo de ECG',        modo:'fixo', regra:'R$ 30,00 fixos por laudo feito por você (fora do plantão).'},
+  {id:'ecgplantao', nome:'ECG em plantão (exame + laudo)', curto:'ECG no plantão',  modo:'pct',  regra:'35%, sem somar os R$ 30 do laudo. Plantão: seg a sex das 19h às 7h59; sábado 13h até segunda 7h59.'},
+  {id:'eco',        nome:'Ecocardiograma / Holter',    curto:'Eco / Holter',        modo:'pct',  regra:'35% — outros exames e procedimentos cardiológicos.'},
+  {id:'sobreaviso', nome:'Procedimento no sobreaviso', curto:'No sobreaviso',       modo:'pct',  regra:'25% — feito por você durante chamado efetivo, inclusive pequena cirurgia.'},
+  {id:'anestesia',  nome:'Anestesia / sedação / analgesia', curto:'Anestesia',      modo:'fixo', regra:'Já incluída no honorário fixo. Registre para controle; não gera comissão.'},
+];
+const TIPO = Object.fromEntries(TIPOS.map(t=>[t.id,t]));
+const ITEM_TIPOS = [
+  {id:'plantao',nome:'Plantão'},{id:'cirurgia',nome:'Cirurgia / anestesia'},{id:'consulta',nome:'Consulta'},
+  {id:'exame',nome:'Exame'},{id:'pessoal',nome:'Pessoal'},{id:'outro',nome:'Outro'}
+];
+const DEFAULTS = {
+  nome:'Sara', fixo:3000, sobreavisoDia:62.5, chamado:150, chamadoUti:300, imposto:0, inicio:'2026-09',
+  tabela:{cardio:50, geral:35, preanest:35, laudoecg:30, ecgplantao:35, eco:35, sobreaviso:25, anestesia:0}
+};
+
+const C = (txt, cl) => ({txt, cl});
+const CONTRATO = {
+  direitos:{titulo:'Seus direitos', cls:'box-d', intro:'O que a clínica deve a você pelo contrato.', itens:[
+    C('<b>Honorário fixo de R$ 3.000/mês</b>Pela atuação no setor de anestesia. Anestesia, sedação, analgesia e monitorização já estão dentro desse valor.','2.2'),
+    C('<b>R$ 62,50 por dia de sobreaviso na escala</b>Você recebe pelo dia escalado mesmo que não seja chamada.','2.3'),
+    C('<b>Adicional quando é chamada</b>+R$ 150 por dia com trabalho efetivo. No CTI/UTI, +R$ 300 no lugar dos R$ 150 (não somam no mesmo dia).','2.3'),
+    C('<b>Comissões da tabela</b>Consultas, pré-anestésicas, ECG, eco, Holter e procedimentos no sobreaviso, conforme o Anexo I.','2.4'),
+    C('<b>Pagamento até o dia 10 do mês seguinte</b>Mediante nota fiscal da sua PJ.','2.7'),
+    C('<b>Aviso de 30 dias antes de mudar valores</b>Mudanças na tabela ou no fixo precisam ser comunicadas por escrito e só valem para serviços feitos depois.','2.8'),
+    C('<b>Estrutura, insumos e equipamentos</b>A clínica fornece tudo o que é preciso para trabalhar e o acesso ao sistema de prontuários.','4.1 · 4.2'),
+    C('<b>Autonomia técnica</b>Você decide tecnicamente com autonomia. Escala e horários organizados pela clínica não significam subordinação.','1.3 · 5.2'),
+    C('<b>Outros trabalhos veterinários</b>Pode atuar em outros lugares que não concorram diretamente com a clínica, sem usar dados, estrutura, marca ou pacientes dela.','7.2'),
+    C('<b>Sair sem multa</b>Basta avisar por escrito com 60 dias de antecedência.','11.1 · 11.2'),
+    C('<b>Devolução de custos se for inocentada</b>Se você reembolsar custos de defesa e depois a Justiça decidir que a culpa não foi sua, a clínica devolve corrigido pelo IPCA em 30 dias.','9.4'),
+    C('<b>Incapacidade total comprovada</b>Pode afastar a multa do aviso prévio, se não houver substituta e for comprovada por documento.','12 §2'),
+  ]},
+  obrigacoes:{titulo:'Suas obrigações', cls:'box-o', intro:'O que o contrato pede que você faça.', itens:[
+    C('<b>Atender pessoalmente</b>Acompanhar seus pacientes, fazer avaliações anestésicas e cardiológicas, planejar e executar os procedimentos e acompanhar a evolução.','3.1'),
+    C('<b>Colaborar com internamento e centro cirúrgico</b>Quando você for a responsável pelo paciente.','3.1'),
+    C('<b>Registrar tudo no sistema</b>Atendimentos, exames, monitorizações, procedimentos, evoluções e prescrições, de forma completa e no tempo certo. Serviço sem registro pode não ser pago.','3.3 · 3.4'),
+    C('<b>Relatórios e laudos</b>Entregar relatórios, laudos e pareceres dos seus pacientes quando pedirem.','3.5'),
+    C('<b>Seguir normas e protocolos</b>Normas técnicas e éticas e os protocolos internos, desde que respeitem sua autonomia técnica.','3.2'),
+    C('<b>Cuidar dos equipamentos em uso</b>Usar conforme as orientações e avisar na hora qualquer defeito ou avaria.','4.3'),
+    C('<b>Redes sociais</b>Ter autorização, marcar @Oftalmovetcascavel e nunca expor dados de pacientes ou tutores.','3.6'),
+    C('<b>Sigilo</b>Não divulgar dados de pacientes, tutores, finanças ou processos da clínica. Avisar logo se houver vazamento. Ao sair, devolver ou apagar cópias.','10.1 · 10.4'),
+    C('<b>Documentação em dia</b>CRMV regular, nota fiscal da PJ, impostos e contabilidade.','6.1 · 2.7'),
+    C('<b>Substituição só com aprovação</b>Se precisar de substituta, avisar antes, indicar profissional habilitada e ter aprovação por escrito.','6-A.2'),
+    C('<b>Impossibilidade de trabalhar</b>Comunicar formalmente em até 48 horas, com documentos.','12 §3'),
+    C('<b>Aviso prévio</b>Se alguém encerrar o contrato, continuar trabalhando normalmente nos 60 dias.','11.3'),
+  ]},
+  nao:{titulo:'Não é sua parte', cls:'box-n', intro:'O que o contrato deixa com a clínica ou fora das suas atribuições.', itens:[
+    C('<b>Responsabilidade Técnica da clínica</b>Organizar a rotina do setor de anestesia não faz de você RT do estabelecimento, de setor ou serviço perante o CFMV/CRMV.','2.2'),
+    C('<b>Manutenção e calibração</b>Manutenção preventiva, conserto e calibração de monitores, bombas de infusão, ECG e ultrassom são da clínica.','4.3'),
+    C('<b>Danos que não são seus</b>Desgaste natural, defeito antigo, falta de manutenção ou calibração não são cobrados de você.','4.3'),
+    C('<b>Fornecer material</b>Estrutura, insumos e equipamentos ficam por conta da clínica.','4.1'),
+    C('<b>Fazer o que foge da sua habilitação</b>Os serviços e exames devem ser compatíveis com sua habilitação e com a estrutura disponível.','1.2 · 3.1'),
+    C('<b>Atos de outros profissionais</b>O contrato fala em responsabilidade pelos atos que você pratica e registra.','3.4 · 9.1'),
+    C('<b>Controle de jornada</b>Você não é empregada: escala e horários servem para organizar o atendimento, não para controlar ponto.','5.1 · 5.2'),
+  ]},
+  atencao:{titulo:'Atenção', cls:'box-a', intro:'Pontos com multa ou risco. Vale reler antes de decisões importantes.', itens:[
+    C('<b>Não atender concorrentes</b>Enquanto o contrato valer, não prestar serviço a quem concorre diretamente com a clínica, salvo autorização por escrito.','7.1'),
+    C('<b>12 meses depois de sair</b>Não atender nem levar pacientes ou clientes da clínica, não usar dados dela e não recrutar colaboradores. Multa de R$ 60.000 por infração.','7.3 · 7.5 · 8'),
+    C('<b>Quebra de sigilo</b>Multa de R$ 60.000 por infração.','10.3'),
+    C('<b>Sair sem cumprir os 60 dias</b>Multa de 2 vezes a média mensal recebida nos últimos 3 meses.','12.1'),
+    C('<b>Atestado genérico não basta</b>Incapacidade parcial ou atestados genéricos não dispensam o aviso prévio.','12 §5'),
+    C('<b>Durante o aviso prévio</b>A clínica pode restringir atendimentos, limitar acesso ao sistema ou mudar você de função.','11.4'),
+    C('<b>Rescisão imediata</b>Pode ocorrer por negligência, descumprir protocolos, quebra de confiança, violar sigilo ou colocar pacientes em risco.','11.6'),
+    C('<b>Sem direitos trabalhistas</b>Contrato civil entre empresas: não há férias, 13º ou FGTS.','5.3'),
+    C('<b>Processos</b>Se a clínica for acionada por algo atribuído a você, você coopera com a defesa e reembolsa custos razoáveis em até 10 dias da notificação.','9.2 · 9.3'),
+    C('<b>Equipamentos</b>Você responde por danos causados por uso inadequado, culpa ou dolo.','4.3'),
+  ]},
+};
+const CONTRATO_FACTS = [
+  ['Contratante','Marchan & Marchan Ltda.'],['Contratada','Sara Lorenzi Lima Veterinária (PJ)'],
+  ['Início','01/09/2026 · prazo indeterminado'],['Saída','Aviso por escrito de 60 dias'],
+  ['Pagamento','Até dia 10 do mês seguinte'],['Foro','Cascavel/PR'],
+];
+
+/* ================= Bíblia (66 livros, contagem de capítulos da Almeida) ================= */
+const BIBLIA = [
+  ['gn','Gênesis',50],['ex','Êxodo',40],['lv','Levítico',27],['nm','Números',36],['dt','Deuteronômio',34],
+  ['js','Josué',24],['jz','Juízes',21],['rt','Rute',4],['1sm','1 Samuel',31],['2sm','2 Samuel',24],
+  ['1rs','1 Reis',22],['2rs','2 Reis',25],['1cr','1 Crônicas',29],['2cr','2 Crônicas',36],['ed','Esdras',10],
+  ['ne','Neemias',13],['et','Ester',10],['job','Jó',42],['sl','Salmos',150],['pv','Provérbios',31],
+  ['ec','Eclesiastes',12],['ct','Cânticos',8],['is','Isaías',66],['jr','Jeremias',52],['lm','Lamentações',5],
+  ['ez','Ezequiel',48],['dn','Daniel',12],['os','Oseias',14],['jl','Joel',3],['am','Amós',9],
+  ['ob','Obadias',1],['jn','Jonas',4],['mq','Miqueias',7],['na','Naum',3],['hc','Habacuque',3],
+  ['sf','Sofonias',3],['ag','Ageu',2],['zc','Zacarias',14],['ml','Malaquias',4],
+  ['mt','Mateus',28],['mc','Marcos',16],['lc','Lucas',24],['jo','João',21],['at','Atos',28],
+  ['rm','Romanos',16],['1co','1 Coríntios',16],['2co','2 Coríntios',13],['gl','Gálatas',6],['ef','Efésios',6],
+  ['fp','Filipenses',4],['cl','Colossenses',4],['1ts','1 Tessalonicenses',5],['2ts','2 Tessalonicenses',3],['1tm','1 Timóteo',6],
+  ['2tm','2 Timóteo',4],['tt','Tito',3],['fm','Filemom',1],['hb','Hebreus',13],['tg','Tiago',5],
+  ['1pe','1 Pedro',5],['2pe','2 Pedro',3],['1jo','1 João',5],['2jo','2 João',1],['3jo','3 João',1],
+  ['jd','Judas',1],['ap','Apocalipse',22],
+];
+const LIVROS = BIBLIA.map(([id,nome,caps],i)=>({id, nome, caps, i, t: i<39 ? 'at' : 'nt'}));
+const LIVRO = Object.fromEntries(LIVROS.map(b=>[b.id,b]));
+const TOTAL_CAPS = LIVROS.reduce((a,b)=>a+b.caps,0);
+const TESTAMENTOS = {at:{nome:'Antigo Testamento', caps:LIVROS.filter(b=>b.t==='at').reduce((a,b)=>a+b.caps,0)}, nt:{nome:'Novo Testamento', caps:LIVROS.filter(b=>b.t==='nt').reduce((a,b)=>a+b.caps,0)}};
+const capKey = (id,n) => `${id}:${n}`;
+
+/* ================= Utilidades ================= */
+const $ = s => document.querySelector(s);
+const fmt = new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'});
+const brl = v => fmt.format(Math.round((+v||0)*100)/100);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pad = n => String(n).padStart(2,'0');
+const iso = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const todayISO = () => iso(new Date());
+const parseISO = s => { const [y,m,d]=s.split('-').map(Number); return new Date(y,m-1,d); };
+const MESES = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+const DIAS = ['domingo','segunda','terça','quarta','quinta','sexta','sábado'];
+const DIAS_C = ['dom','seg','ter','qua','qui','sex','sáb'];
+const ymOf = s => s.slice(0,7);
+const ymLabel = ym => { const [y,m]=ym.split('-').map(Number); return `${MESES[m-1]} ${y}`; };
+const ymShift = (ym,n) => { const [y,m]=ym.split('-').map(Number); const d=new Date(y,m-1+n,1); return `${d.getFullYear()}-${pad(d.getMonth()+1)}`; };
+const dShort = s => { const d=parseISO(s); return `${DIAS_C[d.getDay()]} ${pad(d.getDate())}/${pad(d.getMonth()+1)}`; };
+const dLong = s => { const d=parseISO(s); return `${DIAS[d.getDay()]}, ${d.getDate()} de ${MESES[d.getMonth()]}`; };
+const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,8);
+const parseMoney = s => { if(s==null) return 0; let t=String(s).replace(/[R$\s]/g,''); if(t.includes(',')) t=t.replace(/\./g,'').replace(',','.'); const n=parseFloat(t); return isFinite(n)?n:0; };
+const moneyInput = v => (v||v===0) && v!=='' ? String((+v).toFixed(2)).replace('.',',') : '';
+function emPlantao(dateStr, hora){
+  if(!dateStr || !hora) return false;
+  const dow = parseISO(dateStr).getDay(); const h = +hora.split(':')[0];
+  if(dow===0) return true;
+  if(dow===6) return h>=13 || h<8;
+  return h>=19 || h<8;
+}
+const ICON = {
+  alert:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>',
+  plus:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
+  moon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>',
+  search:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>',
+  back:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 6l-6 6 6 6"/></svg>',
+};
+
+/* ================= Estado e armazenamento ================= */
+const LS_KEY = 'sara-trabalho-v1';
+let state = { settings: structuredClone(DEFAULTS), extras:{}, days:{}, biblia:{lidos:{}} };
+const ui = { view:'inicio', ym: ymOf(todayISO()), selDay: todayISO(), filtro:'todos', busca:'', ctab:'direitos', btab:'at', livro:null, sheet:null, armed:null };
+
+function normSettings(s){ const o = {...structuredClone(DEFAULTS), ...(s||{})}; o.tabela = {...DEFAULTS.tabela, ...((s&&s.tabela)||{})}; delete o.kind; return o; }
+// biblia.lidos: { 'gn:1': 'YYYY-MM-DD' } — capítulo lido → data em que foi marcado
+function normBiblia(b){ const l = b && b.lidos && typeof b.lidos==='object' ? b.lidos : {}; return {lidos:{...l}}; }
+function loadLocal(){
+  try{ const raw = localStorage.getItem(LS_KEY); if(!raw) return;
+    const o = JSON.parse(raw); state = { settings: normSettings(o.settings), extras: o.extras||{}, days: o.days||{}, biblia: normBiblia(o.biblia) };
+  }catch(e){}
+}
+function saveLocal(){ try{ localStorage.setItem(LS_KEY, JSON.stringify(state)); }catch(e){} }
+
+let cloud = null; let mode = 'connecting';
+const queues = {};
+function setMode(m){ mode=m; const el=$('#sync');
+  el.className = 'sync ' + (m==='cloud'?'cloud':m==='local'?'local':'');
+  el.querySelector('span').textContent = m==='cloud' ? 'Salvo na conta' : m==='local' ? (window.claude ? 'Só neste aparelho' : 'Salvo no aparelho') : 'Conectando…';
+}
+function writeDoc(docId, body){
+  if(!cloud) return Promise.resolve();
+  const prev = queues[docId] || Promise.resolve();
+  const p = prev.then(()=> body===null ? cloud.doc(docId).delete() : cloud.doc(docId).set(body))
+    .catch(e=>{ if(e && (e.code==='invalid_argument'||e.code==='revoked'||e.code==='not_granted')){ cloud=null; setMode('local'); toast('Sem permissão para salvar na conta: guardando neste aparelho'); } });
+  queues[docId] = p; return p;
+}
+const dayDocId = d => 'd_'+d, exDocId = id => 'x_'+id;
+async function uploadAll(){
+  await writeDoc('settings', {kind:'settings', ...state.settings});
+  for(const e of Object.values(state.extras)) await writeDoc(exDocId(e.id), {kind:'extra', ...e});
+  for(const d of Object.values(state.days)) await writeDoc(dayDocId(d.date), {kind:'day', ...d});
+  if(Object.keys(state.biblia.lidos).length) await writeDoc('biblia', {kind:'biblia', lidos: state.biblia.lidos});
+}
+function applySnapshot(snap){
+  const next = { settings: structuredClone(DEFAULTS), extras:{}, days:{}, biblia:{lidos:{}} };
+  for(const doc of snap.docs){ const d = doc.data(); if(!d) continue;
+    if(d.kind==='settings') next.settings = normSettings(d);
+    else if(d.kind==='biblia') next.biblia = normBiblia(d);
+    else if(d.kind==='extra' && d.id) next.extras[d.id] = {...d};
+    else if(d.kind==='day' && d.date) next.days[d.date] = {...d, itens: Array.isArray(d.itens)? d.itens.map(x=>({...x})) : []};
+  }
+  state = next; saveLocal(); render();
+}
+async function initCloud(){
+  try{
+    if(!window.claude || !window.claude.use){ setMode('local'); return; }
+    const [db, user] = await Promise.all([window.claude.use('db'), window.claude.use('user')]);
+    const id = user ? await user.id() : null;
+    if(!db || !id){ setMode('local'); return; }
+    const col = db.collection('data/users/' + id);
+    const first = await col.get();
+    cloud = col;
+    if(first.empty && (Object.keys(state.extras).length || Object.keys(state.days).length || Object.keys(state.biblia.lidos).length)) await uploadAll();
+    if(!cloud) return;
+    setMode('cloud');
+    col.onSnapshot(applySnapshot, ()=>{ cloud=null; setMode('local'); });
+  }catch(e){ cloud=null; setMode('local'); }
+}
+
+/* Gravações */
+function saveSettings(patch){ state.settings = normSettings({...state.settings, ...patch}); saveLocal(); writeDoc('settings', {kind:'settings', ...state.settings}); render(); }
+function saveExtra(e){ state.extras[e.id] = e; saveLocal(); writeDoc(exDocId(e.id), {kind:'extra', ...e}); render(); }
+function deleteExtra(id){ delete state.extras[id]; saveLocal(); writeDoc(exDocId(id), null); render(); }
+function blankDay(date){ return {date, sobreaviso:false, chamado:false, cti:false, notas:'', itens:[]}; }
+function updateDay(date, patch){
+  const d = {...blankDay(date), ...(state.days[date]||{}), ...patch, date};
+  if(!d.sobreaviso){ d.chamado=false; d.cti=false; }
+  if(!d.chamado) d.cti=false;
+  const empty = !d.sobreaviso && !d.chamado && !(d.notas||'').trim() && !(d.itens||[]).length;
+  if(empty){ delete state.days[date]; writeDoc(dayDocId(date), null); }
+  else { delete d.kind; state.days[date] = d; writeDoc(dayDocId(date), {kind:'day', ...d}); }
+  saveLocal(); render();
+}
+function saveLidos(lidos){ state.biblia = {lidos}; saveLocal(); writeDoc('biblia', {kind:'biblia', lidos}); render(); }
+
+/* ================= Cálculos ================= */
+function calc(ym){
+  const s = state.settings;
+  const ex = Object.values(state.extras).filter(e=>(e.data||'').startsWith(ym));
+  const days = Object.values(state.days).filter(d=>d.date.startsWith(ym));
+  const nSob = days.filter(d=>d.sobreaviso).length;
+  const cham = days.filter(d=>d.chamado); const nUti = cham.filter(d=>d.cti).length; const nCham = cham.length - nUti;
+  const fixo = ym >= (s.inicio||'2026-09') ? +s.fixo : 0;
+  const vSob = nSob * s.sobreavisoDia, vCham = nCham*s.chamado + nUti*s.chamadoUti;
+  const vCom = ex.reduce((a,e)=>a+(+e.comissao||0),0);
+  const bruto = fixo + vSob + vCham + vCom;
+  const semReg = ex.filter(e=>!e.registrado && TIPO[e.tipo]?.id!=='anestesia').length;
+  return {ex, days, nSob, nCham, nUti, fixo, vSob, vCham, vCom, bruto, semReg};
+}
+function comissaoDe(tipo, valor){
+  const t = TIPO[tipo]; const tab = state.settings.tabela[tipo];
+  if(!t) return 0; if(t.modo==='fixo') return +tab || 0;
+  return Math.round((parseMoney(valor) * (+tab||0)/100)*100)/100;
+}
+function regraDe(tipo){ const t=TIPO[tipo]; const v=state.settings.tabela[tipo];
+  if(tipo==='anestesia') return t.regra;
+  if(t.modo==='fixo') return `${brl(v)} fixos por laudo feito por você, fora do horário de plantão.`;
+  return `${String(v).replace('.',',')}% — ${t.regra.replace(/^[\d,]+%\s*[—,]\s*/,'')}`;
+}
+function valorLabel(tipo){ const t=TIPO[tipo]; const v=state.settings.tabela[tipo]; return t.modo==='fixo' ? (v? brl(v): 'no fixo') : `${String(v).replace('.',',')}%`; }
+
+/* ================= Render ================= */
+let pendingRender = false;
+function typingInMain(){ const a=document.activeElement; return a && $('#main').contains(a) && (a.tagName==='TEXTAREA' || (a.tagName==='INPUT' && !['checkbox','radio','file'].includes(a.type))); }
+function render(){
+  if(typingInMain()){ pendingRender = true; return; }
+  pendingRender = false;
+  const v = ui.view;
+  document.querySelectorAll('.tabs button').forEach(b=> b.getAttribute('data-v')===v ? b.setAttribute('aria-current','page') : b.removeAttribute('aria-current'));
+  $('#month-row').hidden = (v==='contrato' || v==='ajustes' || v==='biblia');
+  $('#fab').hidden = v!=='extras';
+  $('#month-label').textContent = cap(ymLabel(ui.ym));
+  $('#hello-name').textContent = `Olá, Dra. ${state.settings.nome || 'Sara'}`;
+  const t = new Date(); $('#hello-date').textContent = `${DIAS[t.getDay()]}, ${t.getDate()} de ${MESES[t.getMonth()]}`;
+  const box = $('#view');
+  box.innerHTML = v==='inicio' ? vInicio() : v==='extras' ? vExtras() : v==='rotina' ? vRotina() : v==='contrato' ? vContrato() : v==='biblia' ? vBiblia() : vAjustes();
+  if(v==='extras') renderExtrasList();
+}
+
+function vInicio(){
+  const c = calc(ui.ym); const s = state.settings;
+  const parts = [['c-fixo',c.fixo],['c-sob',c.vSob],['c-cham',c.vCham],['c-com',c.vCom]];
+  const bar = c.bruto>0 ? parts.filter(p=>p[1]>0).map(p=>`<span class="${p[0]}" style="flex:${p[1]}"></span>`).join('') : '';
+  const [y,m] = ui.ym.split('-').map(Number); const pg = new Date(y, m, 10);
+  const liq = s.imposto>0 ? `<div class="net"><span>Líquido estimado (−${String(s.imposto).replace('.',',')}% de impostos)</span><b class="num">${brl(c.bruto*(1-s.imposto/100))}</b></div>` : '';
+  const alertHtml = c.semReg ? `<button class="alert" data-act="ver-semreg">${ICON.alert}<span><b>${c.semReg} ${c.semReg>1?'extras ainda não marcados':'extra ainda não marcado'} como registrado</b><small>Serviço sem registro no sistema pode não ser pago (cl. 3.3). Toque para conferir.</small></span></button>` : '';
+
+  const hoje = todayISO();
+  const prox = Object.values(state.days).filter(d=>d.sobreaviso && d.date>=hoje).sort((a,b)=>a.date.localeCompare(b.date)).slice(0,4);
+  const proxHtml = prox.length ? `<ul class="plist">${prox.map(d=>{ const dt=parseISO(d.date); const pl=(d.itens||[]).filter(i=>i.tipo==='plantao')[0];
+      return `<li><button data-act="ir-dia" data-d="${d.date}"><span class="dbadge"><b>${dt.getDate()}</b><small>${DIAS_C[dt.getDay()]}</small></span><span class="t"><b>${d.date===hoje?'Hoje':esc(cap(dLong(d.date)))}</b><small>${pl? esc(`${pl.inicio||''}${pl.fim?'–'+pl.fim:''} · ${pl.desc||'Plantão'}`) : 'Sobreaviso na escala'}${d.chamado?' · chamada'+(d.cti?' (CTI/UTI)':''):''}</small></span></button></li>`; }).join('')}</ul>`
+    : `<p class="empty">Nenhum plantão marcado. Na aba Rotina, toque no dia e ligue “Sobreaviso na escala”.</p>`;
+
+  const hojeD = state.days[hoje]; const hojeItens = (hojeD?.itens||[]).slice().sort((a,b)=>(a.inicio||'').localeCompare(b.inicio||''));
+  const hojeEx = Object.values(state.extras).filter(e=>e.data===hoje);
+  const hojeHtml = (hojeItens.length||hojeEx.length) ? `<ul class="agenda">${hojeItens.map(i=>agendaItem(hoje,i)).join('')}${hojeEx.map(e=>`<li><button data-act="edit-extra" data-id="${e.id}"><span class="hr">${esc(e.hora||'—')}</span><span class="t"><span class="k" style="color:var(--accent)">Extra · ${esc(TIPO[e.tipo]?.curto||'')}</span><br>${esc(e.paciente||'Paciente')}${e.tutor?' · '+esc(e.tutor):''}</span></button></li>`).join('')}</ul>`
+    : `<p class="empty">Nada anotado para hoje.</p>`;
+
+  const ini = state.settings.inicio || '2026-09'; let start = ymShift(ui.ym,-5); if(start<ini) start=ini;
+  const meses=[]; for(let k=start; k<=ui.ym; k=ymShift(k,1)) meses.push(k);
+  const vals = meses.map(k=>calc(k).bruto); const max = Math.max(...vals,1);
+  const hist = meses.length>1 ? `<section class="card"><div class="sec-head"><h2>Últimos meses</h2><span class="muted" style="font-size:12.5px">bruto</span></div><div class="months">${meses.map((k,i)=>`<div><span class="col ${k===ui.ym?'cur':''}" style="height:${Math.max(4,Math.round(vals[i]/max*80))}px"><em class="num">${(vals[i]/1000).toFixed(1).replace('.',',')} mil</em></span><small>${MESES[+k.slice(5)-1].slice(0,3)}</small></div>`).join('')}</div></section>` : '';
+
+  return `
+  <section class="hero" aria-label="Resumo do mês">
+    <div><div class="eyebrow">Bruto previsto · ${esc(ymLabel(ui.ym))}</div></div>
+    <div class="big num">${brl(c.bruto)}</div>
+    <div class="sub">Pagamento até <b>${pad(pg.getDate())}/${pad(pg.getMonth()+1)}/${pg.getFullYear()}</b>, com a nota fiscal da sua PJ.</div>
+    <div class="bar" aria-hidden="true">${bar}</div>
+    <ul class="rows">
+      <li><i class="dot c-fixo"></i><span class="lbl">Honorário fixo<small>Setor de anestesia</small></span><span class="v num">${brl(c.fixo)}</span></li>
+      <li><i class="dot c-sob"></i><span class="lbl">Sobreaviso<small>${c.nSob} ${c.nSob===1?'dia':'dias'} × ${brl(s.sobreavisoDia)}</small></span><span class="v num">${brl(c.vSob)}</span></li>
+      <li><i class="dot c-cham"></i><span class="lbl">Chamados efetivos<small>${c.nCham} × ${brl(s.chamado)}${c.nUti?` · ${c.nUti} CTI/UTI × ${brl(s.chamadoUti)}`:''}</small></span><span class="v num">${brl(c.vCham)}</span></li>
+      <li><i class="dot c-com"></i><span class="lbl">Comissões dos extras<small>${c.ex.length} ${c.ex.length===1?'serviço':'serviços'}</small></span><span class="v num">${brl(c.vCom)}</span></li>
+    </ul>
+    ${liq}
+  </section>
+  ${alertHtml}
+  <div class="quick">
+    <button class="qbtn a" data-act="novo-extra"><span class="ic">${ICON.plus}</span>Lançar extra<small>Consulta, ECG, eco…</small></button>
+    <button class="qbtn b" data-act="ir-dia" data-d="${hoje}"><span class="ic">${ICON.moon}</span>Marcar plantão<small>Sobreaviso e chamados</small></button>
+  </div>
+  <section class="card"><div class="sec-head"><h2>Próximos plantões</h2><button class="link" data-act="view" data-v="rotina">Ver rotina</button></div>${proxHtml}</section>
+  <section class="card"><div class="sec-head"><h2>Hoje</h2><button class="link" data-act="ir-dia" data-d="${hoje}">Anotar</button></div>${hojeHtml}</section>
+  ${hist}
+  <p class="disc">Valores brutos pelas regras do contrato e dos Anexos I e II, antes das retenções e impostos da nota fiscal.</p>`;
+}
+
+function vExtras(){
+  const c = calc(ui.ym);
+  const counts = {todos:c.ex.length, semreg:c.semReg};
+  const tiposUsados = [...new Set(c.ex.map(e=>e.tipo))];
+  return `
+  <div class="sumline"><span class="muted">${c.ex.length} ${c.ex.length===1?'serviço':'serviços'} em ${esc(MESES[+ui.ym.slice(5)-1])}</span><b class="num">${brl(c.vCom)}</b></div>
+  <div class="toolbar">
+    <label class="search">${ICON.search}<input id="busca" type="search" placeholder="Buscar paciente ou tutor(a)" value="${esc(ui.busca)}" autocomplete="off"></label>
+    <div class="chips" role="group" aria-label="Filtro">
+      <button class="chip" data-act="filtro" data-f="todos" aria-pressed="${ui.filtro==='todos'}">Todos<span class="n">${counts.todos}</span></button>
+      <button class="chip" data-act="filtro" data-f="semreg" aria-pressed="${ui.filtro==='semreg'}">Sem registro<span class="n">${counts.semreg}</span></button>
+      ${tiposUsados.map(t=>`<button class="chip" data-act="filtro" data-f="${t}" aria-pressed="${ui.filtro===t}">${esc(TIPO[t]?.curto||t)}</button>`).join('')}
+    </div>
+  </div>
+  <div id="ex-list" style="display:flex;flex-direction:column;gap:14px"></div>`;
+}
+function extraCard(e){
+  const t = TIPO[e.tipo]||{curto:e.tipo,modo:'pct'};
+  const base = t.modo==='pct' && e.valor ? `serviço ${brl(e.valor)} · ${String(e.pct??'').replace('.',',')}%` : (e.tipo==='anestesia'?'incluída no fixo':'valor fixo');
+  return `<article class="ex" data-act="edit-extra" data-id="${e.id}" role="button" tabindex="0">
+    <div class="ex-top"><span class="tag ${(+e.comissao)?'':'zero'}">${esc(t.curto)}</span><span class="val num">${(+e.comissao)?'+ '+brl(e.comissao):'—'}</span></div>
+    <div class="ex-mid"><b>${esc(e.paciente||'Paciente sem nome')}</b>${e.tutor?` <span class="muted">· ${esc(e.tutor)}</span>`:''}</div>
+    <div class="ex-bot"><span class="num">${esc(e.hora||'')}${e.hora?' · ':''}${esc(base)}</span>
+      ${e.tipo==='anestesia'?'':`<button class="reg ${e.registrado?'on':''}" data-act="toggle-reg" data-id="${e.id}">${e.registrado?'Registrado no sistema ✓':'Marcar como registrado'}</button>`}</div>
+  </article>`;
+}
+function renderExtrasList(){
+  const el = $('#ex-list'); if(!el) return;
+  const q = ui.busca.trim().toLowerCase();
+  let ex = calc(ui.ym).ex;
+  if(ui.filtro==='semreg') ex = ex.filter(e=>!e.registrado && e.tipo!=='anestesia');
+  else if(ui.filtro!=='todos') ex = ex.filter(e=>e.tipo===ui.filtro);
+  if(q) ex = ex.filter(e=>(`${e.paciente||''} ${e.tutor||''} ${e.obs||''}`).toLowerCase().includes(q));
+  ex.sort((a,b)=>(b.data+(b.hora||'')).localeCompare(a.data+(a.hora||'')));
+  if(!ex.length){ el.innerHTML = `<section class="card"><p class="empty">${calc(ui.ym).ex.length? 'Nenhum extra encontrado com esse filtro.' : 'Nenhum extra lançado neste mês. Toque em <b>+ Extra</b>, escolha o tipo de serviço e preencha paciente, tutor(a), data e valor. A comissão é calculada pela tabela do contrato.'}</p></section>`; return; }
+  const groups = {}; ex.forEach(e=>{ (groups[e.data] ||= []).push(e); });
+  el.innerHTML = Object.keys(groups).map(d=>{ const tot = groups[d].reduce((a,e)=>a+(+e.comissao||0),0);
+    return `<div class="daygroup"><h3>${esc(dShort(d))} · <span class="num">${brl(tot)}</span></h3>${groups[d].map(extraCard).join('')}</div>`; }).join('');
+}
+
+function agendaItem(date, i){
+  const t = ITEM_TIPOS.find(x=>x.id===i.tipo)||ITEM_TIPOS[5];
+  return `<li><button data-act="edit-item" data-d="${date}" data-i="${i.id}"><span class="hr">${esc(i.inicio||'—')}${i.fim?`<small>até ${esc(i.fim)}</small>`:''}</span><span class="t"><span class="k k-${t.id}">${esc(t.nome)}</span><br>${esc(i.desc||'')}</span></button></li>`;
+}
+function vRotina(){
+  const [y,m] = ui.ym.split('-').map(Number);
+  if(ymOf(ui.selDay)!==ui.ym) ui.selDay = (ymOf(todayISO())===ui.ym) ? todayISO() : `${ui.ym}-01`;
+  const first = new Date(y,m-1,1).getDay(); const nd = new Date(y,m,0).getDate(); const hoje=todayISO();
+  let cells = DIAS_C.map(d=>`<span class="h">${d}</span>`).join('');
+  for(let i=0;i<first;i++) cells += '<span></span>';
+  const exByDay = {}; Object.values(state.extras).forEach(e=>{ if(e.data) exByDay[e.data]=(exByDay[e.data]||0)+1; });
+  for(let d=1; d<=nd; d++){
+    const ds = `${ui.ym}-${pad(d)}`; const day = state.days[ds];
+    const cls = [ds===hoje?'today':'', day?.sobreaviso?'sob':'', ds===ui.selDay?'sel':''].join(' ');
+    const marks = `${day?.sobreaviso?'<i class="m-sob"></i>':''}${day?.chamado?'<i class="m-cham"></i>':''}${(day?.itens||[]).length?'<i class="m-it"></i>':''}${exByDay[ds]?'<i class="m-ex"></i>':''}`;
+    cells += `<button class="${cls}" data-act="sel-day" data-d="${ds}" aria-label="${esc(dLong(ds))}"><span>${d}</span><span class="marks">${marks}</span></button>`;
+  }
+  const ds = ui.selDay; const day = {...blankDay(ds), ...(state.days[ds]||{})}; const s = state.settings;
+  const itens = (day.itens||[]).slice().sort((a,b)=>(a.inicio||'').localeCompare(b.inicio||''));
+  const exDia = Object.values(state.extras).filter(e=>e.data===ds).sort((a,b)=>(a.hora||'').localeCompare(b.hora||''));
+  const vDia = (day.sobreaviso? s.sobreavisoDia:0) + (day.chamado? (day.cti? s.chamadoUti : s.chamado):0) + exDia.reduce((a,e)=>a+(+e.comissao||0),0);
+  return `
+  <section class="card">
+    <div class="cal">${cells}</div>
+    <div class="legend"><span><i class="m-sob"></i>Sobreaviso</span><span><i class="m-cham"></i>Chamada</span><span><i class="m-it"></i>Agenda</span><span><i class="m-ex"></i>Extra</span></div>
+  </section>
+  <section class="card">
+    <div class="sec-head"><h2>${esc(cap(dLong(ds)))}</h2>${ds===hoje?'<span class="tag zero">Hoje</span>':''}</div>
+    <div>
+      <div class="toggle"><span class="lbl"><b>Sobreaviso na escala</b><small>+${brl(s.sobreavisoDia)} pelo dia, mesmo sem chamado</small></span><label class="sw"><input type="checkbox" id="t-sob" ${day.sobreaviso?'checked':''} aria-label="Sobreaviso na escala"><span></span></label></div>
+      <div class="toggle"><span class="lbl"><b>Fui chamada (trabalho efetivo)</b><small>+${brl(s.chamado)} no dia · precisa ter registro</small></span><label class="sw w"><input type="checkbox" id="t-cham" ${day.chamado?'checked':''} ${day.sobreaviso?'':'disabled'} aria-label="Fui chamada"><span></span></label></div>
+      <div class="toggle"><span class="lbl"><b>Chamado no CTI/UTI</b><small>${brl(s.chamadoUti)} no lugar dos ${brl(s.chamado)}</small></span><label class="sw w"><input type="checkbox" id="t-cti" ${day.cti?'checked':''} ${day.chamado?'':'disabled'} aria-label="Chamado no CTI/UTI"><span></span></label></div>
+    </div>
+    <div class="daytotal"><span class="muted">Ganhos extras do dia</span><b class="num">${brl(vDia)}</b></div>
+  </section>
+  <section class="card">
+    <div class="sec-head"><h2>Agenda do dia</h2><button class="link" data-act="novo-item">+ Adicionar</button></div>
+    ${itens.length? `<ul class="agenda">${itens.map(i=>agendaItem(ds,i)).join('')}</ul>` : `<p class="empty">Anote horários de plantão, cirurgias, consultas ou compromissos.</p>`}
+  </section>
+  <section class="card">
+    <div class="sec-head"><h2>Extras deste dia</h2><button class="link" data-act="novo-extra" data-d="${ds}">+ Lançar</button></div>
+    ${exDia.length? `<div style="display:flex;flex-direction:column;gap:8px">${exDia.map(extraCard).join('')}</div>` : `<p class="empty">Nenhum extra neste dia.</p>`}
+  </section>
+  <section class="card">
+    <h2>Anotações</h2>
+    <textarea id="day-notas" placeholder="Passagem de plantão, pendências, lembretes…">${esc(day.notas||'')}</textarea>
+  </section>`;
+}
+
+function vContrato(){
+  const tabs = [['direitos','Direitos'],['obrigacoes','Obrigações'],['nao','Não é sua parte'],['atencao','Atenção'],['valores','Valores']];
+  let body;
+  if(ui.ctab==='valores'){
+    const s=state.settings;
+    body = `<section class="card"><h2>Tabela de comissões</h2><p class="intro">Anexo I. A comissão é sobre o serviço feito e registrado por você.</p>
+      <div class="tbl-wrap"><table><thead><tr><th>Serviço</th><th class="r">Você recebe</th></tr></thead><tbody>
+      ${TIPOS.map(t=>`<tr><td><b>${esc(t.nome)}</b><br><span class="muted" style="font-size:12.5px">${esc(regraDe(t.id).replace(/^[^—]*—\s*/,''))}</span></td><td class="r num">${esc(t.id==='anestesia'?'no fixo':valorLabel(t.id))}</td></tr>`).join('')}
+      </tbody></table></div></section>
+      <section class="card"><h2>Fixo e sobreaviso</h2><p class="intro">Anexo II.</p>
+      <div class="tbl-wrap"><table><tbody>
+        <tr><td>Honorário fixo mensal (setor de anestesia)</td><td class="r num">${brl(s.fixo)}</td></tr>
+        <tr><td>Dia de sobreaviso na escala</td><td class="r num">${brl(s.sobreavisoDia)}</td></tr>
+        <tr><td>Chamado com trabalho efetivo (por dia)</td><td class="r num">+${brl(s.chamado)}</td></tr>
+        <tr><td>Chamado no CTI/UTI (substitui o anterior)</td><td class="r num">+${brl(s.chamadoUti)}</td></tr>
+      </tbody></table></div>
+      <ul class="clist">
+        <li><p>Os adicionais de chamado só são devidos com trabalho efetivo e registro.</p><span class="cl">Anexo II</span></li>
+        <li><p>R$ 150 e R$ 300 não somam no mesmo dia.</p><span class="cl">2.3</span></li>
+        <li><p>Fixo, sobreaviso e comissões podem somar quando forem serviços diferentes e registrados.</p><span class="cl">Anexo II</span></li>
+        <li><p>Horário de plantão para o ECG: segunda a sexta das 19h às 7h59; sábado das 13h até segunda às 7h59.</p><span class="cl">Anexo I</span></li>
+      </ul></section>`;
+  } else {
+    const g = CONTRATO[ui.ctab];
+    body = `<section class="card ${g.cls}"><h2>${esc(g.titulo)}</h2><p class="intro">${esc(g.intro)}</p>
+      <ul class="clist">${g.itens.map(i=>`<li><p>${i.txt}</p><span class="cl">cl. ${esc(i.cl)}</span></li>`).join('')}</ul></section>`;
+  }
+  return `
+  <section class="card"><span class="eyebrow">Contrato de prestação de serviços veterinários</span>
+    <div class="facts">${CONTRATO_FACTS.map(f=>`<div><small>${esc(f[0])}</small><b>${esc(f[1])}</b></div>`).join('')}</div></section>
+  <div class="seg" role="group" aria-label="Seções do contrato">${tabs.map(t=>`<button data-act="ctab" data-t="${t[0]}" aria-pressed="${ui.ctab===t[0]}">${t[1]}</button>`).join('')}</div>
+  ${body}
+  <p class="disc">Resumo para consulta rápida. Em caso de dúvida, vale o texto do contrato assinado; para decisões importantes, consulte um advogado.</p>`;
+}
+
+const pctTxt = (n,tot) => `${(n ? Math.max(0.1, Math.floor(n/tot*1000)/10) : 0).toLocaleString('pt-BR')}%`;
+const pbar = (n,tot) => `<div class="pbar" aria-hidden="true"><span style="width:${tot? (n/tot*100).toFixed(2):0}%"></span></div>`;
+function bStats(){
+  const L = state.biblia.lidos; const hoje = todayISO();
+  const porLivro = {}; let at=0, nt=0, nHoje=0, ult=null;
+  for(const k in L){
+    const [id,ns] = k.split(':'); const b = LIVRO[id]; const n = +ns;
+    if(!b || !(n>=1 && n<=b.caps)) continue;
+    porLivro[id] = (porLivro[id]||0) + 1; b.t==='at' ? at++ : nt++;
+    if(L[k]===hoje) nHoje++;
+    const ord = b.i*1000 + n; // último lido = data mais recente; no empate, o mais adiante na Bíblia
+    if(!ult || L[k]>ult.dt || (L[k]===ult.dt && ord>ult.ord)) ult = {dt:L[k], ord, b, n};
+  }
+  const datas = new Set(Object.values(L)); let seq=0; const d=new Date();
+  if(!datas.has(iso(d))) d.setDate(d.getDate()-1);
+  while(datas.has(iso(d))){ seq++; d.setDate(d.getDate()-1); }
+  // Próximo capítulo não lido depois do último marcado (volta ao início se chegar no Apocalipse)
+  let prox = null;
+  const seqCaps = []; LIVROS.forEach(b=>{ for(let n=1;n<=b.caps;n++) seqCaps.push([b,n]); });
+  const start = ult ? seqCaps.findIndex(([b,n])=>b===ult.b && n===ult.n) + 1 : 0;
+  for(let j=0;j<seqCaps.length;j++){ const [b,n] = seqCaps[(start+j)%seqCaps.length]; if(!L[capKey(b.id,n)]){ prox={b,n}; break; } }
+  return {at, nt, total:at+nt, porLivro, nHoje, seq, prox};
+}
+function vBiblia(){
+  const st = bStats();
+  if(ui.livro && LIVRO[ui.livro]) return vLivro(LIVRO[ui.livro], st);
+  const proxHtml = st.prox ? `<section class="card"><div class="next"><span class="t"><span class="eyebrow">${st.total?'Próximo capítulo':'Comece por aqui'}</span><b>${esc(st.prox.b.nome)} ${st.prox.n}</b></span>
+      <span class="btnrow"><button class="btn" data-act="b-livro" data-id="${st.prox.b.id}">Abrir livro</button><button class="btn primary" data-act="b-prox" data-id="${st.prox.b.id}" data-n="${st.prox.n}">Marcar lido</button></span></div></section>`
+    : `<section class="card"><h2>Bíblia toda lida!</h2><p class="intro">Você marcou todos os ${TOTAL_CAPS.toLocaleString('pt-BR')} capítulos.</p></section>`;
+  const livros = LIVROS.filter(b=>b.t===ui.btab);
+  return `
+  <section class="hero" aria-label="Progresso da leitura">
+    <div class="eyebrow">Leitura da Bíblia</div>
+    <div class="big num">${pctTxt(st.total, TOTAL_CAPS)}</div>
+    <div class="sub"><b class="num">${st.total.toLocaleString('pt-BR')}</b> de ${TOTAL_CAPS.toLocaleString('pt-BR')} capítulos lidos</div>
+    ${pbar(st.total, TOTAL_CAPS)}
+    ${['at','nt'].map(t=>{ const n = t==='at'?st.at:st.nt; const T = TESTAMENTOS[t]; return `<div class="trow"><div class="trow-top"><b>${T.nome}</b><span class="num">${n} de ${T.caps}</span></div>${pbar(n, T.caps)}</div>`; }).join('')}
+  </section>
+  <div class="bstats">
+    <div><b class="num">${st.nHoje}</b><small>${st.nHoje===1?'capítulo hoje':'capítulos hoje'}</small></div>
+    <div><b class="num">${st.seq}</b><small>${st.seq===1?'dia seguido':'dias seguidos'}</small></div>
+    <div><b class="num">${(TOTAL_CAPS-st.total).toLocaleString('pt-BR')}</b><small>faltam</small></div>
+  </div>
+  ${proxHtml}
+  <div class="seg" role="group" aria-label="Testamento"><button data-act="b-tab" data-t="at" aria-pressed="${ui.btab==='at'}">Antigo Testamento</button><button data-act="b-tab" data-t="nt" aria-pressed="${ui.btab==='nt'}">Novo Testamento</button></div>
+  <section class="card"><ul class="books">${livros.map(b=>{ const n = st.porLivro[b.id]||0; const done = n===b.caps;
+    return `<li><button data-act="b-livro" data-id="${b.id}" class="${done?'done':''}"><b>${esc(b.nome)}</b><span class="cnt">${done?'Lido ✓':`${n} de ${b.caps}`}</span>${pbar(n,b.caps)}</button></li>`; }).join('')}</ul></section>`;
+}
+function vLivro(b, st){
+  const L = state.biblia.lidos; const n = st.porLivro[b.id]||0;
+  const ant = LIVROS[b.i-1], prx = LIVROS[b.i+1];
+  let caps = ''; for(let c=1;c<=b.caps;c++){ const k = capKey(b.id,c); const lido = !!L[k];
+    caps += `<button data-act="b-cap" data-id="${b.id}" data-n="${c}" aria-pressed="${lido}" aria-label="${esc(b.nome)} ${c}${lido?', lido em '+esc(dShort(L[k])):''}" ${lido?`title="Lido em ${esc(dShort(L[k]))}"`:''}>${c}</button>`; }
+  return `
+  <button class="back" data-act="b-livros">${ICON.back}Todos os livros</button>
+  <section class="card">
+    <div class="sec-head"><h2>${esc(b.nome)}</h2><span class="muted num" style="font-size:13.5px">${n} de ${b.caps}</span></div>
+    ${pbar(n, b.caps)}
+    <div class="caps" role="group" aria-label="Capítulos de ${esc(b.nome)}">${caps}</div>
+    <p class="hint">Toque no capítulo para marcar como lido. Toque de novo para desmarcar.</p>
+    <div class="btnrow">
+      ${n<b.caps?`<button class="btn" data-act="b-todos" data-id="${b.id}">Marcar livro todo</button>`:''}
+      ${n?`<button class="btn danger" data-act="b-limpar" data-id="${b.id}">Desmarcar todos</button>`:''}
+    </div>
+  </section>
+  <div class="bnav">
+    ${ant?`<button class="link" data-act="b-livro" data-id="${ant.id}">← ${esc(ant.nome)}</button>`:'<span></span>'}
+    ${prx?`<button class="link" data-act="b-livro" data-id="${prx.id}">${esc(prx.nome)} →</button>`:'<span></span>'}
+  </div>`;
+}
+
+function vAjustes(){
+  const s = state.settings;
+  const modeTxt = !window.claude ? 'Seus dados ficam salvos só neste aparelho, no navegador — nada é enviado para a internet. Salve um backup de vez em quando, e sempre antes de trocar de celular ou limpar os dados do navegador.' : mode==='cloud' ? 'Seus lançamentos ficam salvos na sua conta Claude, visíveis só para você, e aparecem em qualquer aparelho em que você abrir este app.' : 'Neste momento os dados estão salvos só neste navegador. Para salvar na sua conta, abra o app logada no Claude com o convite de acesso. Faça backups de vez em quando.';
+  return `
+  <button class="back" data-act="view" data-v="inicio">${ICON.back}Voltar</button>
+  <section class="card"><h2>Seus dados</h2><p class="intro">${modeTxt}</p>
+    <div class="btnrow"><button class="btn" data-act="exportar">Salvar backup</button><button class="btn" data-act="importar">Restaurar backup</button></div>
+    <div id="backup-box" class="backup-box" hidden></div>
+  </section>
+  <section class="card"><h2>Valores do contrato</h2><p class="intro">A clínica pode atualizar valores com aviso escrito de 30 dias (cl. 2.8). Mudanças aqui valem para novos lançamentos; os extras já lançados mantêm a comissão calculada.</p>
+    <div class="grid2">
+      <label class="field">Honorário fixo<input id="s-fixo" data-set="fixo" inputmode="decimal" value="${moneyInput(s.fixo)}"></label>
+      <label class="field">Dia de sobreaviso<input id="s-sob" data-set="sobreavisoDia" inputmode="decimal" value="${moneyInput(s.sobreavisoDia)}"></label>
+      <label class="field">Chamado efetivo<input id="s-cham" data-set="chamado" inputmode="decimal" value="${moneyInput(s.chamado)}"></label>
+      <label class="field">Chamado CTI/UTI<input id="s-uti" data-set="chamadoUti" inputmode="decimal" value="${moneyInput(s.chamadoUti)}"></label>
+    </div>
+    <h2 style="font-size:15px;margin-top:4px">Comissões</h2>
+    <div class="grid2">${TIPOS.filter(t=>t.id!=='anestesia').map(t=>`<label class="field">${esc(t.curto)}<small>${t.modo==='fixo'?'R$ por laudo':'% do serviço'}</small><input id="s-t-${t.id}" data-tab="${t.id}" inputmode="decimal" value="${String(s.tabela[t.id]).replace('.',',')}"></label>`).join('')}</div>
+  </section>
+  <section class="card"><h2>Estimativa de impostos</h2><p class="intro">Opcional. Se informar a alíquota da sua PJ, o Financeiro mostra também o líquido estimado.</p>
+    <label class="field">Alíquota (%)<input id="s-imp" data-set="imposto" inputmode="decimal" value="${String(s.imposto||0).replace('.',',')}"></label>
+  </section>
+  <section class="card"><h2>Nome</h2><label class="field">Como o app te chama<input id="s-nome" data-set="nome" value="${esc(s.nome)}"></label></section>`;
+}
+
+/* ================= Folhas (formulários) ================= */
+function openSheet(html){ $('#sheet-body').innerHTML = html; $('#sheet').hidden = false; ui.armed=null; }
+function closeSheet(){ $('#sheet').hidden = true; ui.sheet = null; $('#sheet-body').innerHTML=''; if(pendingRender) render(); }
+
+function extraForm(e){
+  const isNew = !e; const hoje = todayISO();
+  const now = new Date(); const horaAgora = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
+  e = e || {id:uid(), tipo:'cardio', paciente:'', tutor:'', data: ui.sheetDate || (ymOf(hoje)===ui.ym ? hoje : `${ui.ym}-01`), hora: horaAgora, valor:'', comissao:'', obs:'', registrado:false};
+  ui.sheet = {kind:'extra', isNew, id:e.id, tipo:e.tipo, comManual: !isNew && Math.abs((+e.comissao||0) - comissaoDe(e.tipo, e.valor)) > 0.004, criadoEm: e.criadoEm};
+  openSheet(`
+    <h2>${isNew?'Novo extra':'Editar extra'}</h2>
+    <div class="tchips" role="group" aria-label="Tipo de serviço">${TIPOS.map(t=>`<button class="tchip" data-act="f-tipo" data-t="${t.id}" aria-pressed="${t.id===e.tipo}">${esc(t.curto)}<small>${esc(valorLabel(t.id))}</small></button>`).join('')}</div>
+    <p class="hint" id="f-regra"></p>
+    <label class="field">Paciente<input id="f-pac" value="${esc(e.paciente)}" placeholder="Nome do animal" autocomplete="off"></label>
+    <label class="field">Tutor(a)<input id="f-tut" value="${esc(e.tutor)}" placeholder="Nome do tutor ou tutora" autocomplete="off"></label>
+    <div class="grid2"><label class="field">Data<input type="date" id="f-data" value="${esc(e.data)}"></label><label class="field">Hora<input type="time" id="f-hora" value="${esc(e.hora)}"></label></div>
+    <div id="f-plantao"></div>
+    <label class="field" id="w-valor">Valor do serviço cobrado (R$)<input id="f-valor" inputmode="decimal" placeholder="0,00" value="${moneyInput(e.valor)}"></label>
+    <label class="field">Sua comissão (R$)<input id="f-com" inputmode="decimal" placeholder="0,00" value="${moneyInput(e.comissao)}"><span class="calc" id="f-calc"></span></label>
+    <label class="field">Observações<textarea id="f-obs" placeholder="Raça, procedimento, nº do prontuário…">${esc(e.obs)}</textarea></label>
+    <label class="check"><input type="checkbox" id="f-reg" ${e.registrado?'checked':''}> Já registrei no sistema / prontuário</label>
+    <div class="btnrow"><button class="btn" data-act="fechar">Cancelar</button><button class="btn primary" data-act="salvar-extra">${isNew?'Salvar extra':'Salvar'}</button></div>
+    ${isNew?'':`<button class="btn danger" data-act="apagar-extra">Excluir este extra</button>`}
+  `);
+  syncExtraForm();
+}
+function syncExtraForm(fromTipo){
+  const sh = ui.sheet; if(!sh || sh.kind!=='extra') return;
+  const t = TIPO[sh.tipo];
+  document.querySelectorAll('.tchip').forEach(b=>b.setAttribute('aria-pressed', b.dataset.t===sh.tipo));
+  $('#f-regra').textContent = regraDe(sh.tipo);
+  $('#w-valor').hidden = t.modo==='fixo';
+  const auto = comissaoDe(sh.tipo, $('#f-valor').value);
+  if(fromTipo) sh.comManual = false;
+  if(!sh.comManual) $('#f-com').value = moneyInput(auto);
+  $('#f-calc').textContent = t.modo==='fixo' ? (sh.tipo==='anestesia' ? 'Incluída no honorário fixo.' : 'Valor fixo da tabela.') : `Pela tabela: ${valorLabel(sh.tipo)} de ${brl(parseMoney($('#f-valor').value))} = ${brl(auto)}`;
+  const pl = emPlantao($('#f-data').value, $('#f-hora').value);
+  const box = $('#f-plantao');
+  if(pl && sh.tipo==='laudoecg') box.innerHTML = `<p class="hint warn">Este horário é de plantão. Se você fez o exame e o laudo, o contrato paga 35% do valor do ECG em vez dos R$ 30.<br><button class="link" data-act="f-tipo" data-t="ecgplantao">Trocar para ECG no plantão</button></p>`;
+  else if(!pl && sh.tipo==='ecgplantao' && $('#f-hora').value) box.innerHTML = `<p class="hint warn">Este horário fica fora do plantão (seg–sex 19h–7h59; sáb 13h até seg 7h59). Fora dele, o laudo de ECG paga R$ 30.<br><button class="link" data-act="f-tipo" data-t="laudoecg">Trocar para Laudo de ECG</button></p>`;
+  else if(sh.tipo==='sobreaviso') box.innerHTML = `<p class="hint">Lembre de marcar o dia como “Fui chamada” na Rotina para receber o adicional do chamado.</p>`;
+  else box.innerHTML = '';
+}
+function salvarExtra(){
+  const sh = ui.sheet; const t = TIPO[sh.tipo];
+  const data = $('#f-data').value;
+  if(!data){ toast('Informe a data do serviço'); return; }
+  const e = { id: sh.id, tipo: sh.tipo, paciente: $('#f-pac').value.trim(), tutor: $('#f-tut').value.trim(), data, hora: $('#f-hora').value,
+    valor: t.modo==='pct' ? parseMoney($('#f-valor').value) : 0, pct: t.modo==='pct' ? +state.settings.tabela[sh.tipo] : null,
+    comissao: parseMoney($('#f-com').value), obs: $('#f-obs').value.trim(), registrado: $('#f-reg').checked,
+    criadoEm: sh.criadoEm || new Date().toISOString() };
+  const wasNew = sh.isNew;
+  saveExtra(e); closeSheet(); if(ymOf(data)!==ui.ym){ ui.ym = ymOf(data); render(); }
+  toast(wasNew ? `Extra salvo · ${brl(e.comissao)}` : 'Extra atualizado');
+}
+
+function itemForm(date, item){
+  const isNew = !item;
+  item = item || {id:uid(), tipo:'plantao', inicio:'19:00', fim:'', desc:''};
+  ui.sheet = {kind:'item', date, isNew, id:item.id, tipo:item.tipo};
+  openSheet(`
+    <h2>${isNew?'Adicionar à agenda':'Editar anotação'}</h2>
+    <p class="muted" style="margin:0">${esc(cap(dLong(date)))}</p>
+    <div class="chips" role="group" aria-label="Tipo">${ITEM_TIPOS.map(t=>`<button class="chip" data-act="i-tipo" data-t="${t.id}" aria-pressed="${t.id===item.tipo}">${esc(t.nome)}</button>`).join('')}</div>
+    <div class="grid2"><label class="field">Início<input type="time" id="i-ini" value="${esc(item.inicio)}"></label><label class="field">Fim<input type="time" id="i-fim" value="${esc(item.fim)}"></label></div>
+    <label class="field">Descrição<input id="i-desc" value="${esc(item.desc)}" placeholder="Ex.: Plantão noturno, cirurgia do Thor, troca de turno…" autocomplete="off"></label>
+    ${isNew && !(state.days[date]?.sobreaviso) ? `<label class="check"><input type="checkbox" id="i-sob" checked> Marcar este dia como sobreaviso na escala (se for plantão)</label>`:''}
+    <div class="btnrow"><button class="btn" data-act="fechar">Cancelar</button><button class="btn primary" data-act="salvar-item">Salvar</button></div>
+    ${isNew?'':`<button class="btn danger" data-act="apagar-item">Excluir</button>`}
+  `);
+  syncItemForm();
+}
+function syncItemForm(){ const sh=ui.sheet; document.querySelectorAll('[data-act="i-tipo"]').forEach(b=>b.setAttribute('aria-pressed', b.dataset.t===sh.tipo));
+  const sob = $('#i-sob'); if(sob){ sob.closest('label').hidden = sh.tipo!=='plantao'; } }
+function salvarItem(){
+  const sh = ui.sheet; const day = {...blankDay(sh.date), ...(state.days[sh.date]||{})};
+  const it = {id:sh.id, tipo:sh.tipo, inicio:$('#i-ini').value, fim:$('#i-fim').value, desc:$('#i-desc').value.trim()};
+  const itens = (day.itens||[]).filter(x=>x.id!==sh.id).concat([it]);
+  const patch = {itens};
+  const sob = $('#i-sob'); if(sob && sh.tipo==='plantao' && sob.checked) patch.sobreaviso = true;
+  closeSheet(); updateDay(sh.date, patch); toast('Anotado na rotina');
+}
+
+/* ================= Backup ================= */
+async function exportar(){
+  const json = JSON.stringify({app:'plantao-extras', versao:1, exportadoEm:new Date().toISOString(), ...state}, null, 1);
+  let dl = null; try{ dl = window.claude?.use ? await window.claude.use('downloads') : null; }catch(e){}
+  if(dl){ try{ const r = await dl.save({filename:`backup-plantao-extras-${todayISO()}.json`, data:json}); if(r?.status==='saved'||r?.status==='delivered') toast('Backup salvo'); return; }catch(e){ if(e && e.code==='declined') return; } }
+  if(!window.claude){ try{ const blob=new Blob([json],{type:'application/json'}); const f=new File([blob],`backup-plantao-extras-${todayISO()}.json`,{type:'application/json'});
+    if(navigator.canShare && navigator.canShare({files:[f]})){ await navigator.share({files:[f], title:'Backup Plantão & Extras'}); toast('Backup pronto'); return; }
+    const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=f.name; document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href); a.remove();},1000); toast('Backup salvo em Downloads'); return; }catch(e){ if(e && e.name==='AbortError') return; } }
+  const box = $('#backup-box'); if(!box) return; box.hidden=false;
+  box.innerHTML = `<p class="intro">Não foi possível baixar o arquivo aqui. Copie o texto abaixo e guarde em um lugar seguro (por exemplo, numa nota).</p><textarea id="backup-txt" readonly>${esc(json)}</textarea><button class="btn" data-act="copiar-backup">Copiar backup</button>`;
+}
+function importarArquivo(file){
+  const r = new FileReader();
+  r.onload = async () => {
+    try{ const o = JSON.parse(r.result); if(!o || (!o.extras && !o.days && !o.biblia)) throw 0;
+      state.settings = normSettings(o.settings);
+      state.biblia = {lidos: {...state.biblia.lidos, ...normBiblia(o.biblia).lidos}};
+      Object.values(o.extras||{}).forEach(e=>{ if(e.id) state.extras[e.id]=e; });
+      Object.values(o.days||{}).forEach(d=>{ if(d.date) state.days[d.date]={...blankDay(d.date), ...d}; });
+      saveLocal(); render(); await uploadAll(); toast('Backup restaurado');
+    }catch(e){ toast('Arquivo inválido: escolha um backup salvo por este app'); }
+  };
+  r.readAsText(file);
+}
+
+/* ================= Eventos ================= */
+let toastT;
+function toast(msg){ const t=$('#toast'); t.textContent=msg; t.hidden=false; clearTimeout(toastT); toastT=setTimeout(()=>t.hidden=true, 2600); }
+
+document.addEventListener('click', ev=>{
+  const a = ev.target.closest('[data-act]'); if(!a) return;
+  const act = a.dataset.act;
+  if(act!=='apagar-extra' && act!=='apagar-item' && act!=='b-limpar' && ui.armed){ ui.armed=null; document.querySelectorAll('.btn.danger.armed').forEach(b=>{b.classList.remove('armed'); b.textContent = b.dataset.label || b.textContent;}); }
+  switch(act){
+    case 'view': if(a.dataset.v==='biblia' && ui.view==='biblia') ui.livro = null; ui.view = a.dataset.v; window.scrollTo(0,0); render(); break;
+    case 'b-tab': ui.btab = a.dataset.t; render(); break;
+    case 'b-livro': ui.livro = a.dataset.id; ui.btab = LIVRO[a.dataset.id].t; window.scrollTo(0,0); render(); break;
+    case 'b-livros': ui.livro = null; window.scrollTo(0,0); render(); break;
+    case 'b-cap': case 'b-prox': {
+      const b = LIVRO[a.dataset.id]; const k = capKey(b.id, a.dataset.n); const lidos = {...state.biblia.lidos};
+      if(lidos[k] && act==='b-cap'){ delete lidos[k]; saveLidos(lidos); toast(`${b.nome} ${a.dataset.n} desmarcado`); break; }
+      lidos[k] = todayISO(); saveLidos(lidos);
+      const n = Object.keys(lidos).filter(x=>x.startsWith(b.id+':')).length;
+      toast(n===b.caps ? `${b.nome} concluído!` : `${b.nome} ${a.dataset.n} lido`);
+      break; }
+    case 'b-todos': { const b = LIVRO[a.dataset.id]; const lidos = {...state.biblia.lidos}; const hoje = todayISO();
+      for(let c=1;c<=b.caps;c++){ const k=capKey(b.id,c); if(!lidos[k]) lidos[k]=hoje; }
+      saveLidos(lidos); toast(`${b.nome} concluído!`); break; }
+    case 'b-limpar':
+      if(ui.armed!=='biblia'){ ui.armed='biblia'; a.dataset.label=a.textContent; a.classList.add('armed'); a.textContent='Toque de novo para desmarcar'; }
+      else { const b = LIVRO[a.dataset.id]; const lidos = {...state.biblia.lidos}; for(let c=1;c<=b.caps;c++) delete lidos[capKey(b.id,c)]; ui.armed=null; saveLidos(lidos); toast(`${b.nome} desmarcado`); }
+      break;
+    case 'mes': ui.ym = ymShift(ui.ym, +a.dataset.d); render(); break;
+    case 'novo-extra': ui.sheetDate = a.dataset.d || null; extraForm(null); break;
+    case 'edit-extra': { const e = state.extras[a.dataset.id]; if(e) extraForm(e); break; }
+    case 'toggle-reg': { ev.stopPropagation(); const e = state.extras[a.dataset.id]; if(e){ saveExtra({...e, registrado:!e.registrado}); } break; }
+    case 'f-tipo': ui.sheet.tipo = a.dataset.t; syncExtraForm(true); break;
+    case 'salvar-extra': salvarExtra(); break;
+    case 'apagar-extra':
+      if(ui.armed!=='extra'){ ui.armed='extra'; a.dataset.label=a.textContent; a.classList.add('armed'); a.textContent='Toque de novo para excluir'; }
+      else { const id=ui.sheet.id; closeSheet(); deleteExtra(id); toast('Extra excluído'); }
+      break;
+    case 'fechar': closeSheet(); break;
+    case 'ver-semreg': ui.view='extras'; ui.filtro='semreg'; render(); break;
+    case 'filtro': ui.filtro = a.dataset.f; document.querySelectorAll('[data-act="filtro"]').forEach(b=>b.setAttribute('aria-pressed', b===a)); renderExtrasList(); break;
+    case 'ir-dia': ui.selDay = a.dataset.d; ui.ym = ymOf(a.dataset.d); ui.view='rotina'; window.scrollTo(0,0); render(); break;
+    case 'sel-day': ui.selDay = a.dataset.d; render(); break;
+    case 'novo-item': itemForm(ui.selDay, null); break;
+    case 'edit-item': { const d=state.days[a.dataset.d]; const it=(d?.itens||[]).find(x=>x.id===a.dataset.i); if(it) itemForm(a.dataset.d, it); break; }
+    case 'i-tipo': ui.sheet.tipo = a.dataset.t; syncItemForm(); break;
+    case 'salvar-item': salvarItem(); break;
+    case 'apagar-item':
+      if(ui.armed!=='item'){ ui.armed='item'; a.dataset.label=a.textContent; a.classList.add('armed'); a.textContent='Toque de novo para excluir'; }
+      else { const sh=ui.sheet; const d=state.days[sh.date]; closeSheet(); updateDay(sh.date, {itens:(d?.itens||[]).filter(x=>x.id!==sh.id)}); toast('Anotação excluída'); }
+      break;
+    case 'ctab': ui.ctab = a.dataset.t; render(); break;
+    case 'exportar': exportar(); break;
+    case 'importar': $('#import-file').click(); break;
+    case 'copiar-backup': { const t=$('#backup-txt'); const ok=()=>toast('Backup copiado');
+      if(navigator.clipboard?.writeText){ navigator.clipboard.writeText(t.value).then(ok, ()=>{ t.select(); toast('Texto selecionado: copie manualmente'); }); } else { t.select(); toast('Texto selecionado: copie manualmente'); } break; }
+  }
+});
+document.addEventListener('keydown', ev=>{
+  if(ev.key==='Escape' && !$('#sheet').hidden) closeSheet();
+  if((ev.key==='Enter'||ev.key===' ') && ev.target.matches('article[data-act]')){ ev.preventDefault(); ev.target.click(); }
+});
+document.addEventListener('input', ev=>{
+  const id = ev.target.id;
+  if(id==='f-valor' || id==='f-data' || id==='f-hora') syncExtraForm();
+  else if(id==='f-com'){ if(ui.sheet) ui.sheet.comManual = true; }
+  else if(id==='busca'){ ui.busca = ev.target.value; renderExtrasList(); }
+});
+document.addEventListener('change', ev=>{
+  const el = ev.target; const id = el.id;
+  if(id==='t-sob') updateDay(ui.selDay, {sobreaviso: el.checked});
+  else if(id==='t-cham') updateDay(ui.selDay, {chamado: el.checked});
+  else if(id==='t-cti') updateDay(ui.selDay, {cti: el.checked});
+  else if(id==='day-notas'){ const v=el.value; el.blur(); updateDay(ui.selDay, {notas: v}); }
+  else if(el.dataset.set){ const k=el.dataset.set; const v = k==='nome' ? el.value.trim()||'Sara' : parseMoney(el.value); saveSettings({[k]: v}); }
+  else if(el.dataset.tab){ saveSettings({tabela:{...state.settings.tabela, [el.dataset.tab]: parseMoney(el.value)}}); }
+  else if(id==='import-file' && el.files[0]){ importarArquivo(el.files[0]); el.value=''; }
+});
+document.addEventListener('focusout', ()=>{ setTimeout(()=>{ if(pendingRender && !typingInMain()) render(); }, 0); });
+
+/* ================= Início ================= */
+loadLocal();
+render();
+setMode('connecting');
+initCloud();
+if(!window.claude){
+  if('serviceWorker' in navigator) window.addEventListener('load', ()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+  try{ navigator.storage && navigator.storage.persist && navigator.storage.persist(); }catch(e){}
+}
+</script>
+
+</body>
+</html>
