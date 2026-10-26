@@ -360,7 +360,7 @@ td.r,th.r{text-align:right;white-space:nowrap}
 /* ================= Dados do contrato ================= */
 const TIPOS = [
   {id:'cardio',     nome:'Consulta cardiológica',      curto:'Consulta cardio',     modo:'pct',  regra:'50% — consulta da sua especialidade, feita por você.'},
-  {id:'geral',      nome:'Consulta geral',             curto:'Consulta geral',      modo:'pct',  regra:'35% — quando feita diretamente por você.'},
+  {id:'geral',      nome:'Consulta geral',             curto:'Consulta geral',      modo:'fixo', unid:'R$ por consulta', regra:'por consulta feita diretamente por você.'},
   {id:'preanest',   nome:'Avaliação pré-anestésica',   curto:'Pré-anestésica',      modo:'fixo', unid:'R$ por avaliação', regra:'por avaliação, quando solicitada, feita e registrada por você.'},
   {id:'laudoecg',   nome:'Laudo de eletrocardiograma', curto:'Laudo de ECG',        modo:'fixo', unid:'R$ por laudo', regra:'R$ 30,00 fixos por laudo feito por você (fora do plantão).'},
   {id:'ecgplantao', nome:'ECG em plantão (exame + laudo)', curto:'ECG no plantão',  modo:'pct',  regra:'35%, sem somar os R$ 30 do laudo. Plantão: seg a sex das 19h às 7h59; sábado 13h até segunda 7h59.'},
@@ -376,7 +376,7 @@ const ITEM_TIPOS = [
 ];
 const DEFAULTS = {
   nome:'Sara', fixo:3000, sobreavisoDia:62.5, chamado:150, chamadoUti:300, plantaoDia:170.77, plantaoCao:25, imposto:0, inicio:'2026-09',
-  tabela:{cardio:50, geral:35, preanest:57.75, laudoecg:30, ecgplantao:35, eco:35, sobreaviso:25, anestesia:0}
+  tabela:{cardio:50, geral:126, preanest:57.75, laudoecg:30, ecgplantao:35, eco:35, sobreaviso:25, anestesia:0}
 };
 
 const C = (txt, cl) => ({txt, cl});
@@ -503,6 +503,7 @@ const ui = { view:'inicio', ym: ymOf(todayISO()), selDay: todayISO(), filtro:'to
 
 function normSettings(s){ const o = {...structuredClone(DEFAULTS), ...(s||{})}; o.tabela = {...DEFAULTS.tabela, ...((s&&s.tabela)||{})}; delete o.kind;
   if(!o.preanestFixo){ o.tabela.preanest = DEFAULTS.tabela.preanest; o.preanestFixo = true; } // era 35%, virou valor fixo
+  if(!o.geralFixo){ o.tabela.geral = DEFAULTS.tabela.geral; o.geralFixo = true; } // consulta geral: era 35%, virou R$ 126 fixos
   return o; }
 // biblia.lidos: { 'gn:1': 'YYYY-MM-DD' } — capítulo lido → data em que foi marcado
 function normBiblia(b){ const l = b && b.lidos && typeof b.lidos==='object' ? b.lidos : {}; return {lidos:{...l}}; }
