@@ -26,6 +26,7 @@
   --gold:#9A6A12; --gold-soft:#F8EDD6;
   --ok:#2C7A4B; --ok-soft:#DDF0E3;
   --warn:#A55B00; --warn-soft:#FBEBD3;
+  --violet:#5E4DB2; --violet-soft:#E9E5FA;
   --shadow:0 1px 2px rgba(20,39,41,.06),0 8px 24px rgba(20,39,41,.06);
   --f-display:"Bricolage Grotesque",ui-rounded,"Segoe UI",system-ui,sans-serif;
   --f-body:"Figtree",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
@@ -39,6 +40,7 @@
   --gold:#E2B45E; --gold-soft:#342913;
   --ok:#6FCB91; --ok-soft:#163323;
   --warn:#EFB15A; --warn-soft:#382912;
+  --violet:#AFA2F2; --violet-soft:#27223F;
   --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.25);
   color-scheme:dark;
 }}
@@ -49,6 +51,7 @@
   --gold:#E2B45E; --gold-soft:#342913;
   --ok:#6FCB91; --ok-soft:#163323;
   --warn:#EFB15A; --warn-soft:#382912;
+  --violet:#AFA2F2; --violet-soft:#27223F;
   --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.25);
   color-scheme:dark;
 }
@@ -97,7 +100,7 @@ main .wrap{display:flex;flex-direction:column;gap:16px}
 .hero .sub{color:var(--muted);font-size:13.5px}
 .bar{display:flex;height:10px;border-radius:99px;overflow:hidden;background:var(--sunk);gap:2px}
 .bar span{display:block;height:100%}
-.c-fixo{background:var(--teal)} .c-sob{background:var(--gold)} .c-cham{background:var(--warn)} .c-com{background:var(--accent)}
+.c-fixo{background:var(--teal)} .c-sob{background:var(--gold)} .c-cham{background:var(--warn)} .c-plan{background:var(--violet)} .c-com{background:var(--accent)}
 .rows{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
 .rows li{display:grid;grid-template-columns:12px 1fr auto;gap:10px;align-items:center;padding:9px 0;border-top:1px solid var(--line)}
 .rows li:first-child{border-top:0}
@@ -167,7 +170,7 @@ main .wrap{display:flex;flex-direction:column;gap:16px}
 .cal button.sel{background:var(--ink);color:var(--bg)}
 .cal .marks{display:flex;gap:3px;height:6px}
 .cal .marks i{width:6px;height:6px;border-radius:50%}
-.m-sob{background:var(--gold)} .m-cham{background:var(--warn)} .m-ex{background:var(--accent)} .m-it{background:var(--teal)}
+.m-sob{background:var(--gold)} .m-cham{background:var(--warn)} .m-ex{background:var(--accent)} .m-it{background:var(--teal)} .m-plan{background:var(--violet)}
 .cal button.sel .marks i{outline:1.5px solid var(--bg)}
 .legend{display:flex;flex-wrap:wrap;gap:12px;font-size:12px;color:var(--muted)}
 .legend span{display:inline-flex;align-items:center;gap:5px}
@@ -182,6 +185,10 @@ main .wrap{display:flex;flex-direction:column;gap:16px}
 .sw span::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:var(--surface);box-shadow:0 1px 3px rgba(0,0,0,.25);transition:transform .15s}
 .sw input:checked+span{background:var(--gold)}
 .sw.w input:checked+span{background:var(--warn)}
+.sw.v input:checked+span{background:var(--violet)}
+.stepper{display:flex;align-items:center;gap:6px;flex:none}
+.stepper button{width:36px;height:36px;border-radius:10px;border:1px solid var(--line);background:var(--bg);font-size:20px;line-height:1;display:grid;place-items:center;padding:0}
+.stepper b{min-width:2.2em;text-align:center;font-size:17px}
 .sw input:checked+span::after{transform:translateX(20px)}
 .sw input:focus-visible+span{outline:2px solid var(--accent);outline-offset:2px}
 .sw input:disabled+span{opacity:.45}
@@ -368,7 +375,7 @@ const ITEM_TIPOS = [
   {id:'exame',nome:'Exame'},{id:'pessoal',nome:'Pessoal'},{id:'outro',nome:'Outro'}
 ];
 const DEFAULTS = {
-  nome:'Sara', fixo:3000, sobreavisoDia:62.5, chamado:150, chamadoUti:300, imposto:0, inicio:'2026-09',
+  nome:'Sara', fixo:3000, sobreavisoDia:62.5, chamado:150, chamadoUti:300, plantaoDia:170.77, plantaoCao:25, imposto:0, inicio:'2026-09',
   tabela:{cardio:50, geral:35, preanest:35, laudoecg:30, ecgplantao:35, eco:35, sobreaviso:25, anestesia:0}
 };
 
@@ -617,12 +624,13 @@ async function contaAcao(acao){
 function saveSettings(patch){ state.settings = normSettings({...state.settings, ...patch}); saveLocal(); writeDoc('settings', {kind:'settings', ...state.settings}); render(); }
 function saveExtra(e){ state.extras[e.id] = e; saveLocal(); writeDoc(exDocId(e.id), {kind:'extra', ...e}); render(); }
 function deleteExtra(id){ delete state.extras[id]; saveLocal(); writeDoc(exDocId(id), null); render(); }
-function blankDay(date){ return {date, sobreaviso:false, chamado:false, cti:false, notas:'', itens:[]}; }
+function blankDay(date){ return {date, sobreaviso:false, chamado:false, cti:false, plantao:false, caes:0, notas:'', itens:[]}; }
 function updateDay(date, patch){
   const d = {...blankDay(date), ...(state.days[date]||{}), ...patch, date};
   if(!d.sobreaviso){ d.chamado=false; d.cti=false; }
   if(!d.chamado) d.cti=false;
-  const empty = !d.sobreaviso && !d.chamado && !(d.notas||'').trim() && !(d.itens||[]).length;
+  d.caes = d.plantao ? Math.max(0, Math.round(+d.caes||0)) : 0;
+  const empty = !d.sobreaviso && !d.chamado && !d.plantao && !(d.notas||'').trim() && !(d.itens||[]).length;
   if(empty){ delete state.days[date]; writeDoc(dayDocId(date), null); }
   else { delete d.kind; state.days[date] = d; writeDoc(dayDocId(date), {kind:'day', ...d}); }
   saveLocal(); render();
@@ -630,6 +638,7 @@ function updateDay(date, patch){
 function saveLidos(lidos){ state.biblia = {lidos}; saveLocal(); writeDoc('biblia', {kind:'biblia', lidos}); render(); }
 
 /* ================= Cálculos ================= */
+const valorPlantao = (d, s) => d && d.plantao ? (+s.plantaoDia||0) + (Math.max(0, +d.caes||0) * (+s.plantaoCao||0)) : 0;
 function calc(ym){
   const s = state.settings;
   const ex = Object.values(state.extras).filter(e=>(e.data||'').startsWith(ym));
@@ -638,10 +647,12 @@ function calc(ym){
   const cham = days.filter(d=>d.chamado); const nUti = cham.filter(d=>d.cti).length; const nCham = cham.length - nUti;
   const fixo = ym >= (s.inicio||'2026-09') ? +s.fixo : 0;
   const vSob = nSob * s.sobreavisoDia, vCham = nCham*s.chamado + nUti*s.chamadoUti;
+  const plan = days.filter(d=>d.plantao); const nPlan = plan.length; const nCaes = plan.reduce((a,d)=>a+(+d.caes||0),0);
+  const vPlan = plan.reduce((a,d)=>a+valorPlantao(d,s),0);
   const vCom = ex.reduce((a,e)=>a+(+e.comissao||0),0);
-  const bruto = fixo + vSob + vCham + vCom;
+  const bruto = fixo + vSob + vCham + vPlan + vCom;
   const semReg = ex.filter(e=>!e.registrado && TIPO[e.tipo]?.id!=='anestesia').length;
-  return {ex, days, nSob, nCham, nUti, fixo, vSob, vCham, vCom, bruto, semReg};
+  return {ex, days, nSob, nCham, nUti, nPlan, nCaes, fixo, vSob, vCham, vPlan, vCom, bruto, semReg};
 }
 function comissaoDe(tipo, valor){
   const t = TIPO[tipo]; const tab = state.settings.tabela[tipo];
@@ -675,16 +686,16 @@ function render(){
 
 function vInicio(){
   const c = calc(ui.ym); const s = state.settings;
-  const parts = [['c-fixo',c.fixo],['c-sob',c.vSob],['c-cham',c.vCham],['c-com',c.vCom]];
+  const parts = [['c-fixo',c.fixo],['c-sob',c.vSob],['c-cham',c.vCham],['c-plan',c.vPlan],['c-com',c.vCom]];
   const bar = c.bruto>0 ? parts.filter(p=>p[1]>0).map(p=>`<span class="${p[0]}" style="flex:${p[1]}"></span>`).join('') : '';
   const [y,m] = ui.ym.split('-').map(Number); const pg = new Date(y, m, 10);
   const liq = s.imposto>0 ? `<div class="net"><span>Líquido estimado (−${String(s.imposto).replace('.',',')}% de impostos)</span><b class="num">${brl(c.bruto*(1-s.imposto/100))}</b></div>` : '';
   const alertHtml = c.semReg ? `<button class="alert" data-act="ver-semreg">${ICON.alert}<span><b>${c.semReg} ${c.semReg>1?'extras ainda não marcados':'extra ainda não marcado'} como registrado</b><small>Serviço sem registro no sistema pode não ser pago (cl. 3.3). Toque para conferir.</small></span></button>` : '';
 
   const hoje = todayISO();
-  const prox = Object.values(state.days).filter(d=>d.sobreaviso && d.date>=hoje).sort((a,b)=>a.date.localeCompare(b.date)).slice(0,4);
+  const prox = Object.values(state.days).filter(d=>(d.sobreaviso||d.plantao) && d.date>=hoje).sort((a,b)=>a.date.localeCompare(b.date)).slice(0,4);
   const proxHtml = prox.length ? `<ul class="plist">${prox.map(d=>{ const dt=parseISO(d.date); const pl=(d.itens||[]).filter(i=>i.tipo==='plantao')[0];
-      return `<li><button data-act="ir-dia" data-d="${d.date}"><span class="dbadge"><b>${dt.getDate()}</b><small>${DIAS_C[dt.getDay()]}</small></span><span class="t"><b>${d.date===hoje?'Hoje':esc(cap(dLong(d.date)))}</b><small>${pl? esc(`${pl.inicio||''}${pl.fim?'–'+pl.fim:''} · ${pl.desc||'Plantão'}`) : 'Sobreaviso na escala'}${d.chamado?' · chamada'+(d.cti?' (CTI/UTI)':''):''}</small></span></button></li>`; }).join('')}</ul>`
+      return `<li><button data-act="ir-dia" data-d="${d.date}"><span class="dbadge"><b>${dt.getDate()}</b><small>${DIAS_C[dt.getDay()]}</small></span><span class="t"><b>${d.date===hoje?'Hoje':esc(cap(dLong(d.date)))}</b><small>${pl? esc(`${pl.inicio||''}${pl.fim?'–'+pl.fim:''} · ${pl.desc||'Plantão'}`) : (d.plantao && !d.sobreaviso ? 'Plantão na clínica' : 'Sobreaviso na escala')}${d.plantao && (pl||d.sobreaviso) ? ' · plantão' : ''}${d.plantao && d.caes ? ` · ${d.caes} ${d.caes===1?'cão':'cães'}` : ''}${d.chamado?' · chamada'+(d.cti?' (CTI/UTI)':''):''}</small></span></button></li>`; }).join('')}</ul>`
     : `<p class="empty">Nenhum plantão marcado. Na aba Rotina, toque no dia e ligue “Sobreaviso na escala”.</p>`;
 
   const hojeD = state.days[hoje]; const hojeItens = (hojeD?.itens||[]).slice().sort((a,b)=>(a.inicio||'').localeCompare(b.inicio||''));
@@ -707,6 +718,7 @@ function vInicio(){
       <li><i class="dot c-fixo"></i><span class="lbl">Honorário fixo<small>Setor de anestesia</small></span><span class="v num">${brl(c.fixo)}</span></li>
       <li><i class="dot c-sob"></i><span class="lbl">Sobreaviso<small>${c.nSob} ${c.nSob===1?'dia':'dias'} × ${brl(s.sobreavisoDia)}</small></span><span class="v num">${brl(c.vSob)}</span></li>
       <li><i class="dot c-cham"></i><span class="lbl">Chamados efetivos<small>${c.nCham} × ${brl(s.chamado)}${c.nUti?` · ${c.nUti} CTI/UTI × ${brl(s.chamadoUti)}`:''}</small></span><span class="v num">${brl(c.vCham)}</span></li>
+      <li><i class="dot c-plan"></i><span class="lbl">Plantões na clínica<small>${c.nPlan} × ${brl(s.plantaoDia)}${c.nCaes?` · ${c.nCaes} ${c.nCaes===1?'cão':'cães'} × ${brl(s.plantaoCao)}`:''}</small></span><span class="v num">${brl(c.vPlan)}</span></li>
       <li><i class="dot c-com"></i><span class="lbl">Comissões dos extras<small>${c.ex.length} ${c.ex.length===1?'serviço':'serviços'}</small></span><span class="v num">${brl(c.vCom)}</span></li>
     </ul>
     ${liq}
@@ -776,17 +788,17 @@ function vRotina(){
   for(let d=1; d<=nd; d++){
     const ds = `${ui.ym}-${pad(d)}`; const day = state.days[ds];
     const cls = [ds===hoje?'today':'', day?.sobreaviso?'sob':'', ds===ui.selDay?'sel':''].join(' ');
-    const marks = `${day?.sobreaviso?'<i class="m-sob"></i>':''}${day?.chamado?'<i class="m-cham"></i>':''}${(day?.itens||[]).length?'<i class="m-it"></i>':''}${exByDay[ds]?'<i class="m-ex"></i>':''}`;
+    const marks = `${day?.sobreaviso?'<i class="m-sob"></i>':''}${day?.chamado?'<i class="m-cham"></i>':''}${day?.plantao?'<i class="m-plan"></i>':''}${(day?.itens||[]).length?'<i class="m-it"></i>':''}${exByDay[ds]?'<i class="m-ex"></i>':''}`;
     cells += `<button class="${cls}" data-act="sel-day" data-d="${ds}" aria-label="${esc(dLong(ds))}"><span>${d}</span><span class="marks">${marks}</span></button>`;
   }
   const ds = ui.selDay; const day = {...blankDay(ds), ...(state.days[ds]||{})}; const s = state.settings;
   const itens = (day.itens||[]).slice().sort((a,b)=>(a.inicio||'').localeCompare(b.inicio||''));
   const exDia = Object.values(state.extras).filter(e=>e.data===ds).sort((a,b)=>(a.hora||'').localeCompare(b.hora||''));
-  const vDia = (day.sobreaviso? s.sobreavisoDia:0) + (day.chamado? (day.cti? s.chamadoUti : s.chamado):0) + exDia.reduce((a,e)=>a+(+e.comissao||0),0);
+  const vDia = (day.sobreaviso? s.sobreavisoDia:0) + valorPlantao(day, s) + (day.chamado? (day.cti? s.chamadoUti : s.chamado):0) + exDia.reduce((a,e)=>a+(+e.comissao||0),0);
   return `
   <section class="card">
     <div class="cal">${cells}</div>
-    <div class="legend"><span><i class="m-sob"></i>Sobreaviso</span><span><i class="m-cham"></i>Chamada</span><span><i class="m-it"></i>Agenda</span><span><i class="m-ex"></i>Extra</span></div>
+    <div class="legend"><span><i class="m-sob"></i>Sobreaviso</span><span><i class="m-cham"></i>Chamada</span><span><i class="m-plan"></i>Plantão</span><span><i class="m-it"></i>Agenda</span><span><i class="m-ex"></i>Extra</span></div>
   </section>
   <section class="card">
     <div class="sec-head"><h2>${esc(cap(dLong(ds)))}</h2>${ds===hoje?'<span class="tag zero">Hoje</span>':''}</div>
@@ -794,6 +806,8 @@ function vRotina(){
       <div class="toggle"><span class="lbl"><b>Sobreaviso na escala</b><small>+${brl(s.sobreavisoDia)} pelo dia, mesmo sem chamado</small></span><label class="sw"><input type="checkbox" id="t-sob" ${day.sobreaviso?'checked':''} aria-label="Sobreaviso na escala"><span></span></label></div>
       <div class="toggle"><span class="lbl"><b>Fui chamada (trabalho efetivo)</b><small>+${brl(s.chamado)} no dia · precisa ter registro</small></span><label class="sw w"><input type="checkbox" id="t-cham" ${day.chamado?'checked':''} ${day.sobreaviso?'':'disabled'} aria-label="Fui chamada"><span></span></label></div>
       <div class="toggle"><span class="lbl"><b>Chamado no CTI/UTI</b><small>${brl(s.chamadoUti)} no lugar dos ${brl(s.chamado)}</small></span><label class="sw w"><input type="checkbox" id="t-cti" ${day.cti?'checked':''} ${day.chamado?'':'disabled'} aria-label="Chamado no CTI/UTI"><span></span></label></div>
+      <div class="toggle"><span class="lbl"><b>Plantão na clínica</b><small>${brl(s.plantaoDia)} + ${brl(s.plantaoCao)} por cão na clínica</small></span><label class="sw v"><input type="checkbox" id="t-plan" ${day.plantao?'checked':''} aria-label="Plantão na clínica"><span></span></label></div>
+      ${day.plantao ? `<div class="toggle"><span class="lbl"><b>Cães na clínica</b><small>${+day.caes||0} × ${brl(s.plantaoCao)} = ${brl((+day.caes||0)*s.plantaoCao)} · plantão ${brl(valorPlantao(day,s))}</small></span><span class="stepper"><button data-act="caes" data-d="-1" aria-label="Menos um cão" ${(+day.caes||0)?'':'disabled'}>−</button><b class="num" aria-live="polite">${+day.caes||0}</b><button data-act="caes" data-d="1" aria-label="Mais um cão">+</button></span></div>` : ''}
     </div>
     <div class="daytotal"><span class="muted">Ganhos extras do dia</span><b class="num">${brl(vDia)}</b></div>
   </section>
@@ -946,6 +960,8 @@ function vAjustes(){
       <label class="field">Dia de sobreaviso<input id="s-sob" data-set="sobreavisoDia" inputmode="decimal" value="${moneyInput(s.sobreavisoDia)}"></label>
       <label class="field">Chamado efetivo<input id="s-cham" data-set="chamado" inputmode="decimal" value="${moneyInput(s.chamado)}"></label>
       <label class="field">Chamado CTI/UTI<input id="s-uti" data-set="chamadoUti" inputmode="decimal" value="${moneyInput(s.chamadoUti)}"></label>
+      <label class="field">Plantão na clínica<input id="s-plan" data-set="plantaoDia" inputmode="decimal" value="${moneyInput(s.plantaoDia)}"></label>
+      <label class="field">Por cão no plantão<input id="s-cao" data-set="plantaoCao" inputmode="decimal" value="${moneyInput(s.plantaoCao)}"></label>
     </div>
     <h2 style="font-size:15px;margin-top:4px">Comissões</h2>
     <div class="grid2">${TIPOS.filter(t=>t.id!=='anestesia' && t.modo!=='manual').map(t=>`<label class="field">${esc(t.curto)}<small>${t.modo==='fixo'?'R$ por laudo':'% do serviço'}</small><input id="s-t-${t.id}" data-tab="${t.id}" inputmode="decimal" value="${String(s.tabela[t.id]).replace('.',',')}"></label>`).join('')}</div>
@@ -1060,7 +1076,7 @@ function importarArquivo(file){
       Object.values(o.days||{}).forEach(d=>{ if(!d.date) return; const cur = state.days[d.date];
         if(!cur){ state.days[d.date] = {...blankDay(d.date), ...d}; return; }
         const itens = [...(cur.itens||[])]; (d.itens||[]).forEach(it=>{ const i = itens.findIndex(x=>x.id===it.id); i>=0 ? itens[i]=it : itens.push(it); });
-        state.days[d.date] = {...blankDay(d.date), ...cur, ...d, sobreaviso: !!(cur.sobreaviso||d.sobreaviso), chamado: !!(cur.chamado||d.chamado), cti: !!(cur.cti||d.cti), notas: d.notas || cur.notas || '', itens}; });
+        state.days[d.date] = {...blankDay(d.date), ...cur, ...d, sobreaviso: !!(cur.sobreaviso||d.sobreaviso), chamado: !!(cur.chamado||d.chamado), cti: !!(cur.cti||d.cti), plantao: !!(cur.plantao||d.plantao), caes: Math.max(+cur.caes||0, +d.caes||0), notas: d.notas || cur.notas || '', itens}; });
       saveLocal(); render(); await uploadAll(); toast('Backup restaurado');
     }catch(e){ toast('Arquivo inválido: escolha um backup salvo por este app'); }
   };
@@ -1109,6 +1125,7 @@ document.addEventListener('click', ev=>{
     case 'filtro': ui.filtro = a.dataset.f; document.querySelectorAll('[data-act="filtro"]').forEach(b=>b.setAttribute('aria-pressed', b===a)); renderExtrasList(); break;
     case 'ir-dia': ui.selDay = a.dataset.d; ui.ym = ymOf(a.dataset.d); ui.view='rotina'; window.scrollTo(0,0); render(); break;
     case 'sel-day': ui.selDay = a.dataset.d; render(); break;
+    case 'caes': { const d = state.days[ui.selDay]; if(d && d.plantao) updateDay(ui.selDay, {caes: Math.max(0, (+d.caes||0) + (+a.dataset.d))}); break; }
     case 'novo-item': itemForm(ui.selDay, null); break;
     case 'edit-item': { const d=state.days[a.dataset.d]; const it=(d?.itens||[]).find(x=>x.id===a.dataset.i); if(it) itemForm(a.dataset.d, it); break; }
     case 'i-tipo': ui.sheet.tipo = a.dataset.t; syncItemForm(); break;
@@ -1144,6 +1161,7 @@ document.addEventListener('change', ev=>{
   if(id==='t-sob') updateDay(ui.selDay, {sobreaviso: el.checked});
   else if(id==='t-cham') updateDay(ui.selDay, {chamado: el.checked});
   else if(id==='t-cti') updateDay(ui.selDay, {cti: el.checked});
+  else if(id==='t-plan') updateDay(ui.selDay, {plantao: el.checked});
   else if(id==='day-notas'){ const v=el.value; el.blur(); updateDay(ui.selDay, {notas: v}); }
   else if(el.dataset.set){ const k=el.dataset.set; const v = k==='nome' ? el.value.trim()||'Sara' : parseMoney(el.value); saveSettings({[k]: v}); }
   else if(el.dataset.tab){ saveSettings({tabela:{...state.settings.tabela, [el.dataset.tab]: parseMoney(el.value)}}); }
