@@ -361,8 +361,8 @@ td.r,th.r{text-align:right;white-space:nowrap}
 const TIPOS = [
   {id:'cardio',     nome:'Consulta cardiológica',      curto:'Consulta cardio',     modo:'pct',  regra:'50% — consulta da sua especialidade, feita por você.'},
   {id:'geral',      nome:'Consulta geral',             curto:'Consulta geral',      modo:'pct',  regra:'35% — quando feita diretamente por você.'},
-  {id:'preanest',   nome:'Avaliação pré-anestésica',   curto:'Pré-anestésica',      modo:'pct',  regra:'35% — quando solicitada, feita e registrada por você.'},
-  {id:'laudoecg',   nome:'Laudo de eletrocardiograma', curto:'Laudo de ECG',        modo:'fixo', regra:'R$ 30,00 fixos por laudo feito por você (fora do plantão).'},
+  {id:'preanest',   nome:'Avaliação pré-anestésica',   curto:'Pré-anestésica',      modo:'fixo', unid:'R$ por avaliação', regra:'por avaliação, quando solicitada, feita e registrada por você.'},
+  {id:'laudoecg',   nome:'Laudo de eletrocardiograma', curto:'Laudo de ECG',        modo:'fixo', unid:'R$ por laudo', regra:'R$ 30,00 fixos por laudo feito por você (fora do plantão).'},
   {id:'ecgplantao', nome:'ECG em plantão (exame + laudo)', curto:'ECG no plantão',  modo:'pct',  regra:'35%, sem somar os R$ 30 do laudo. Plantão: seg a sex das 19h às 7h59; sábado 13h até segunda 7h59.'},
   {id:'eco',        nome:'Ecocardiograma / Holter',    curto:'Eco / Holter',        modo:'pct',  regra:'35% — outros exames e procedimentos cardiológicos.'},
   {id:'sobreaviso', nome:'Procedimento no sobreaviso', curto:'No sobreaviso',       modo:'pct',  regra:'25% — feito por você durante chamado efetivo, inclusive pequena cirurgia.'},
@@ -376,7 +376,7 @@ const ITEM_TIPOS = [
 ];
 const DEFAULTS = {
   nome:'Sara', fixo:3000, sobreavisoDia:62.5, chamado:150, chamadoUti:300, plantaoDia:170.77, plantaoCao:25, imposto:0, inicio:'2026-09',
-  tabela:{cardio:50, geral:35, preanest:35, laudoecg:30, ecgplantao:35, eco:35, sobreaviso:25, anestesia:0}
+  tabela:{cardio:50, geral:35, preanest:57.75, laudoecg:30, ecgplantao:35, eco:35, sobreaviso:25, anestesia:0}
 };
 
 const C = (txt, cl) => ({txt, cl});
@@ -501,7 +501,9 @@ const LS_KEY = 'sara-trabalho-v1';
 let state = { settings: structuredClone(DEFAULTS), extras:{}, days:{}, biblia:{lidos:{}} };
 const ui = { view:'inicio', ym: ymOf(todayISO()), selDay: todayISO(), filtro:'todos', busca:'', ctab:'direitos', btab:'at', livro:null, sheet:null, armed:null };
 
-function normSettings(s){ const o = {...structuredClone(DEFAULTS), ...(s||{})}; o.tabela = {...DEFAULTS.tabela, ...((s&&s.tabela)||{})}; delete o.kind; return o; }
+function normSettings(s){ const o = {...structuredClone(DEFAULTS), ...(s||{})}; o.tabela = {...DEFAULTS.tabela, ...((s&&s.tabela)||{})}; delete o.kind;
+  if(!o.preanestFixo){ o.tabela.preanest = DEFAULTS.tabela.preanest; o.preanestFixo = true; } // era 35%, virou valor fixo
+  return o; }
 // biblia.lidos: { 'gn:1': 'YYYY-MM-DD' } — capítulo lido → data em que foi marcado
 function normBiblia(b){ const l = b && b.lidos && typeof b.lidos==='object' ? b.lidos : {}; return {lidos:{...l}}; }
 function loadLocal(){
@@ -661,7 +663,8 @@ function comissaoDe(tipo, valor){
 }
 function regraDe(tipo){ const t=TIPO[tipo]; const v=state.settings.tabela[tipo];
   if(tipo==='anestesia' || t.modo==='manual') return t.regra;
-  if(t.modo==='fixo') return `${brl(v)} fixos por laudo feito por você, fora do horário de plantão.`;
+  if(tipo==='laudoecg') return `${brl(v)} fixos por laudo feito por você, fora do horário de plantão.`;
+  if(t.modo==='fixo') return `${brl(v)} — ${t.regra}`;
   return `${String(v).replace('.',',')}% — ${t.regra.replace(/^[\d,]+%\s*[—,]\s*/,'')}`;
 }
 function valorLabel(tipo){ const t=TIPO[tipo]; const v=state.settings.tabela[tipo]; if(t.modo==='manual') return 'valor livre'; return t.modo==='fixo' ? (v? brl(v): 'no fixo') : `${String(v).replace('.',',')}%`; }
@@ -964,7 +967,7 @@ function vAjustes(){
       <label class="field">Por cão no plantão<input id="s-cao" data-set="plantaoCao" inputmode="decimal" value="${moneyInput(s.plantaoCao)}"></label>
     </div>
     <h2 style="font-size:15px;margin-top:4px">Comissões</h2>
-    <div class="grid2">${TIPOS.filter(t=>t.id!=='anestesia' && t.modo!=='manual').map(t=>`<label class="field">${esc(t.curto)}<small>${t.modo==='fixo'?'R$ por laudo':'% do serviço'}</small><input id="s-t-${t.id}" data-tab="${t.id}" inputmode="decimal" value="${String(s.tabela[t.id]).replace('.',',')}"></label>`).join('')}</div>
+    <div class="grid2">${TIPOS.filter(t=>t.id!=='anestesia' && t.modo!=='manual').map(t=>`<label class="field">${esc(t.curto)}<small>${t.modo==='fixo'?(t.unid||'R$'):'% do serviço'}</small><input id="s-t-${t.id}" data-tab="${t.id}" inputmode="decimal" value="${String(s.tabela[t.id]).replace('.',',')}"></label>`).join('')}</div>
   </section>
   <section class="card"><h2>Estimativa de impostos</h2><p class="intro">Opcional. Se informar a alíquota da sua PJ, o Financeiro mostra também o líquido estimado.</p>
     <label class="field">Alíquota (%)<input id="s-imp" data-set="imposto" inputmode="decimal" value="${String(s.imposto||0).replace('.',',')}"></label>
