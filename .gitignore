@@ -4,3 +4,5 @@ netlify.toml
 firebase.json
 .firebaserc
 firestore.rules
+# Arquivos de importação com dados de pacientes: nunca publicar
+bonificacoes-*.json

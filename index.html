@@ -360,6 +360,7 @@ const TIPOS = [
   {id:'eco',        nome:'Ecocardiograma / Holter',    curto:'Eco / Holter',        modo:'pct',  regra:'35% — outros exames e procedimentos cardiológicos.'},
   {id:'sobreaviso', nome:'Procedimento no sobreaviso', curto:'No sobreaviso',       modo:'pct',  regra:'25% — feito por você durante chamado efetivo, inclusive pequena cirurgia.'},
   {id:'anestesia',  nome:'Anestesia / sedação / analgesia', curto:'Anestesia',      modo:'fixo', regra:'Já incluída no honorário fixo. Registre para controle; não gera comissão.'},
+  {id:'outro',      nome:'Outra bonificação',          curto:'Outra bonificação',   modo:'manual', regra:'Fora da tabela do contrato (raio X, ultrassom, indicação, venda…). Digite quanto você vai receber e descreva nas observações.'},
 ];
 const TIPO = Object.fromEntries(TIPOS.map(t=>[t.id,t]));
 const ITEM_TIPOS = [
@@ -644,15 +645,15 @@ function calc(ym){
 }
 function comissaoDe(tipo, valor){
   const t = TIPO[tipo]; const tab = state.settings.tabela[tipo];
-  if(!t) return 0; if(t.modo==='fixo') return +tab || 0;
+  if(!t || t.modo==='manual') return 0; if(t.modo==='fixo') return +tab || 0;
   return Math.round((parseMoney(valor) * (+tab||0)/100)*100)/100;
 }
 function regraDe(tipo){ const t=TIPO[tipo]; const v=state.settings.tabela[tipo];
-  if(tipo==='anestesia') return t.regra;
+  if(tipo==='anestesia' || t.modo==='manual') return t.regra;
   if(t.modo==='fixo') return `${brl(v)} fixos por laudo feito por você, fora do horário de plantão.`;
   return `${String(v).replace('.',',')}% — ${t.regra.replace(/^[\d,]+%\s*[—,]\s*/,'')}`;
 }
-function valorLabel(tipo){ const t=TIPO[tipo]; const v=state.settings.tabela[tipo]; return t.modo==='fixo' ? (v? brl(v): 'no fixo') : `${String(v).replace('.',',')}%`; }
+function valorLabel(tipo){ const t=TIPO[tipo]; const v=state.settings.tabela[tipo]; if(t.modo==='manual') return 'valor livre'; return t.modo==='fixo' ? (v? brl(v): 'no fixo') : `${String(v).replace('.',',')}%`; }
 
 /* ================= Render ================= */
 let pendingRender = false;
@@ -739,7 +740,7 @@ function vExtras(){
 }
 function extraCard(e){
   const t = TIPO[e.tipo]||{curto:e.tipo,modo:'pct'};
-  const base = t.modo==='pct' && e.valor ? `serviço ${brl(e.valor)} · ${String(e.pct??'').replace('.',',')}%` : (e.tipo==='anestesia'?'incluída no fixo':'valor fixo');
+  const base = t.modo==='pct' ? (e.valor ? `serviço ${brl(e.valor)} · ${String(e.pct??'').replace('.',',')}%` : 'valor a preencher') : (e.tipo==='anestesia'?'incluída no fixo': t.modo==='manual' ? 'fora da tabela' : 'valor fixo');
   return `<article class="ex" data-act="edit-extra" data-id="${e.id}" role="button" tabindex="0">
     <div class="ex-top"><span class="tag ${(+e.comissao)?'':'zero'}">${esc(t.curto)}</span><span class="val num">${(+e.comissao)?'+ '+brl(e.comissao):'—'}</span></div>
     <div class="ex-mid"><b>${esc(e.paciente||'Paciente sem nome')}</b>${e.tutor?` <span class="muted">· ${esc(e.tutor)}</span>`:''}</div>
@@ -817,7 +818,7 @@ function vContrato(){
     const s=state.settings;
     body = `<section class="card"><h2>Tabela de comissões</h2><p class="intro">Anexo I. A comissão é sobre o serviço feito e registrado por você.</p>
       <div class="tbl-wrap"><table><thead><tr><th>Serviço</th><th class="r">Você recebe</th></tr></thead><tbody>
-      ${TIPOS.map(t=>`<tr><td><b>${esc(t.nome)}</b><br><span class="muted" style="font-size:12.5px">${esc(regraDe(t.id).replace(/^[^—]*—\s*/,''))}</span></td><td class="r num">${esc(t.id==='anestesia'?'no fixo':valorLabel(t.id))}</td></tr>`).join('')}
+      ${TIPOS.filter(t=>t.modo!=='manual').map(t=>`<tr><td><b>${esc(t.nome)}</b><br><span class="muted" style="font-size:12.5px">${esc(regraDe(t.id).replace(/^[^—]*—\s*/,''))}</span></td><td class="r num">${esc(t.id==='anestesia'?'no fixo':valorLabel(t.id))}</td></tr>`).join('')}
       </tbody></table></div></section>
       <section class="card"><h2>Fixo e sobreaviso</h2><p class="intro">Anexo II.</p>
       <div class="tbl-wrap"><table><tbody>
@@ -947,7 +948,7 @@ function vAjustes(){
       <label class="field">Chamado CTI/UTI<input id="s-uti" data-set="chamadoUti" inputmode="decimal" value="${moneyInput(s.chamadoUti)}"></label>
     </div>
     <h2 style="font-size:15px;margin-top:4px">Comissões</h2>
-    <div class="grid2">${TIPOS.filter(t=>t.id!=='anestesia').map(t=>`<label class="field">${esc(t.curto)}<small>${t.modo==='fixo'?'R$ por laudo':'% do serviço'}</small><input id="s-t-${t.id}" data-tab="${t.id}" inputmode="decimal" value="${String(s.tabela[t.id]).replace('.',',')}"></label>`).join('')}</div>
+    <div class="grid2">${TIPOS.filter(t=>t.id!=='anestesia' && t.modo!=='manual').map(t=>`<label class="field">${esc(t.curto)}<small>${t.modo==='fixo'?'R$ por laudo':'% do serviço'}</small><input id="s-t-${t.id}" data-tab="${t.id}" inputmode="decimal" value="${String(s.tabela[t.id]).replace('.',',')}"></label>`).join('')}</div>
   </section>
   <section class="card"><h2>Estimativa de impostos</h2><p class="intro">Opcional. Se informar a alíquota da sua PJ, o Financeiro mostra também o líquido estimado.</p>
     <label class="field">Alíquota (%)<input id="s-imp" data-set="imposto" inputmode="decimal" value="${String(s.imposto||0).replace('.',',')}"></label>
@@ -986,11 +987,11 @@ function syncExtraForm(fromTipo){
   const t = TIPO[sh.tipo];
   document.querySelectorAll('.tchip').forEach(b=>b.setAttribute('aria-pressed', b.dataset.t===sh.tipo));
   $('#f-regra').textContent = regraDe(sh.tipo);
-  $('#w-valor').hidden = t.modo==='fixo';
+  $('#w-valor').hidden = t.modo!=='pct';
   const auto = comissaoDe(sh.tipo, $('#f-valor').value);
   if(fromTipo) sh.comManual = false;
   if(!sh.comManual) $('#f-com').value = moneyInput(auto);
-  $('#f-calc').textContent = t.modo==='fixo' ? (sh.tipo==='anestesia' ? 'Incluída no honorário fixo.' : 'Valor fixo da tabela.') : `Pela tabela: ${valorLabel(sh.tipo)} de ${brl(parseMoney($('#f-valor').value))} = ${brl(auto)}`;
+  $('#f-calc').textContent = t.modo==='manual' ? 'Fora da tabela: digite quanto você vai receber.' : t.modo==='fixo' ? (sh.tipo==='anestesia' ? 'Incluída no honorário fixo.' : 'Valor fixo da tabela.') : `Pela tabela: ${valorLabel(sh.tipo)} de ${brl(parseMoney($('#f-valor').value))} = ${brl(auto)}`;
   const pl = emPlantao($('#f-data').value, $('#f-hora').value);
   const box = $('#f-plantao');
   if(pl && sh.tipo==='laudoecg') box.innerHTML = `<p class="hint warn">Este horário é de plantão. Se você fez o exame e o laudo, o contrato paga 35% do valor do ECG em vez dos R$ 30.<br><button class="link" data-act="f-tipo" data-t="ecgplantao">Trocar para ECG no plantão</button></p>`;
@@ -1053,10 +1054,13 @@ function importarArquivo(file){
   const r = new FileReader();
   r.onload = async () => {
     try{ const o = JSON.parse(r.result); if(!o || (!o.extras && !o.days && !o.biblia)) throw 0;
-      state.settings = normSettings(o.settings);
+      if(o.settings) state.settings = normSettings(o.settings);
       state.biblia = {lidos: {...state.biblia.lidos, ...normBiblia(o.biblia).lidos}};
       Object.values(o.extras||{}).forEach(e=>{ if(e.id) state.extras[e.id]=e; });
-      Object.values(o.days||{}).forEach(d=>{ if(d.date) state.days[d.date]={...blankDay(d.date), ...d}; });
+      Object.values(o.days||{}).forEach(d=>{ if(!d.date) return; const cur = state.days[d.date];
+        if(!cur){ state.days[d.date] = {...blankDay(d.date), ...d}; return; }
+        const itens = [...(cur.itens||[])]; (d.itens||[]).forEach(it=>{ const i = itens.findIndex(x=>x.id===it.id); i>=0 ? itens[i]=it : itens.push(it); });
+        state.days[d.date] = {...blankDay(d.date), ...cur, ...d, sobreaviso: !!(cur.sobreaviso||d.sobreaviso), chamado: !!(cur.chamado||d.chamado), cti: !!(cur.cti||d.cti), notas: d.notas || cur.notas || '', itens}; });
       saveLocal(); render(); await uploadAll(); toast('Backup restaurado');
     }catch(e){ toast('Arquivo inválido: escolha um backup salvo por este app'); }
   };
